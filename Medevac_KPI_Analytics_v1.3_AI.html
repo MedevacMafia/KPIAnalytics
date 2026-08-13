@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Medevac KPI &amp; Analytics v1.3 AI</title>
+<style>:root {
+  color-scheme: light dark;
+  background-color: transparent !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --main-surface-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --red: light-dark(rgb(186 38 35), rgb(250 66 62));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, "Segoe UI", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 10px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 17'%3E%3Cpath d='M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z'/%3E%3C/svg%3E");
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-visualize-standalone] {
+  background-color: var(--background) !important;
+}
+
+/* Generic mobile code-block hosts provide light/dark mode but no series palette.
+   AppBlock hosts set all six variables themselves. */
+:root:not([data-app-block-surface]) {
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(#f3883b, #f59a56);
+  --viz-series-3: light-dark(#5dc977, #74d58b);
+  --viz-series-4: light-dark(#eb77b1, #f08fc0);
+  --viz-series-5: light-dark(#9b79ec, #aa91ef);
+  --viz-series-6: light-dark(#3ab9b1, #5acbc2);
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html > body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+:root:not([data-app-block-surface]) > body {
+  padding: 12px;
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive > .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align="right"]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align="center"]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget > :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* The bundled tooltip runtime owns [data-tooltip]. AppBlock's CSS-only
+   pseudo-tooltip can widen dense grids even while hidden. */
+main [data-tooltip]::after {
+  content: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls > .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls > .form-label > :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--interactive-label-primary-default, var(--primary-foreground));
+  background: var(--interactive-bg-primary-default, var(--foreground));
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(
+    in srgb,
+    var(--interactive-label-primary-default, var(--primary-foreground)) 50%,
+    transparent
+  );
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type="file"] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type="file"]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type="file"]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type="color"] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type="color"]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type="checkbox"]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type="checkbox"]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: "";
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type="radio"] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type="radio"]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: "";
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed="true"],
+    [aria-selected="true"],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed="true"], [aria-selected="true"], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget > svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+</style>
+</head>
+<body>
+<style>
+  #medevac-kpi-app{--navy:light-dark(#173a63,#8bc8ff);--blue:light-dark(#1778b5,#72c7ff);--teal:light-dark(#168c9e,#6ed7df);--ok:light-dark(#238b45,#64ce85);--warn:light-dark(#a94d1e,#ffad7a);--soft:color-mix(in srgb,var(--blue) 10%,transparent);--line:color-mix(in srgb,var(--foreground) 18%,transparent);color:var(--foreground);width:100%}
+  #medevac-kpi-app *{box-sizing:border-box}
+  #medevac-kpi-app .app-header{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;padding:8px 0 18px;border-bottom:2px solid var(--navy)}
+  #medevac-kpi-app .app-header h1{margin:0;color:var(--navy);letter-spacing:.03em}
+  #medevac-kpi-app .app-header p{margin:5px 0 0;color:var(--muted-foreground)}
+  #medevac-kpi-app .privacy-chip{display:inline-flex;align-items:center;gap:7px;color:var(--ok);font-weight:500}
+  #medevac-kpi-app .privacy-chip:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--ok)}
+  #medevac-kpi-app .app-main{display:grid;gap:18px;padding:18px 0 6px}
+  #medevac-kpi-app .section-heading{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+  #medevac-kpi-app .section-heading h2,#medevac-kpi-app .section-heading h3{margin:0;color:var(--navy)}
+  #medevac-kpi-app .section-heading p{margin:3px 0 0;color:var(--muted-foreground)}
+  #medevac-kpi-app .import-zone{display:grid;gap:13px;text-align:center;padding:24px;border:2px dashed var(--line)}
+  #medevac-kpi-app .import-zone.is-dragging{border-color:var(--blue);background:var(--soft)}
+  #medevac-kpi-app .import-actions,#medevac-kpi-app .pool-actions,#medevac-kpi-app .date-presets,#medevac-kpi-app .chart-controls{display:flex;gap:8px;flex-wrap:wrap}
+  #medevac-kpi-app .import-actions{justify-content:center}
+  #medevac-kpi-app .import-status{min-height:1.5em;color:var(--muted-foreground)}
+  #medevac-kpi-app .import-status.success{color:var(--ok)}
+  #medevac-kpi-app .import-status.error{color:var(--destructive)}
+  #medevac-kpi-app .pool-strip{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px}
+  #medevac-kpi-app .pool-strip strong{color:var(--navy)}
+  #medevac-kpi-app .tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+  #medevac-kpi-app .ai-section{border:1px solid color-mix(in srgb,var(--blue) 30%,var(--line));background:linear-gradient(135deg,color-mix(in srgb,var(--blue) 7%,transparent),transparent 55%)}
+  #medevac-kpi-app .ai-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid color-mix(in srgb,var(--blue) 35%,var(--line));border-radius:999px;color:var(--navy);font-size:.86em;white-space:nowrap}
+  #medevac-kpi-app .ai-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.36fr);gap:14px;align-items:start}
+  #medevac-kpi-app .ai-question{min-height:92px;resize:vertical}
+  #medevac-kpi-app .ai-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}
+  #medevac-kpi-app .ai-result{margin-top:13px;padding:13px;border:1px solid var(--line);background:color-mix(in srgb,var(--background) 85%,transparent);min-height:58px}
+  #medevac-kpi-app .ai-result h3{margin-bottom:6px;color:var(--navy)}
+  #medevac-kpi-app .ai-result table{margin-top:8px}
+  #medevac-kpi-app .ai-status{color:var(--muted-foreground)}
+  #medevac-kpi-app .ai-status.success{color:var(--ok)}#medevac-kpi-app .ai-status.error{color:var(--destructive)}
+  #medevac-kpi-app .ai-settings{padding:11px;border-left:1px solid var(--line)}
+  #medevac-kpi-app .ai-settings summary{cursor:pointer;color:var(--navy);font-weight:500;margin-bottom:8px}
+  #medevac-kpi-app .ai-settings .form-label{margin-top:8px}
+  #medevac-kpi-app .ai-example{display:inline-block;margin:4px 4px 0 0;padding:3px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted-foreground);cursor:pointer;font-size:.86em;background:transparent}
+  #medevac-kpi-app .ai-example:hover{color:var(--foreground);border-color:var(--blue)}
+  #medevac-kpi-app .tabs .btn[aria-selected="true"]{background:var(--primary);color:var(--primary-foreground)}
+  #medevac-kpi-app .tab-panel[hidden]{display:none}
+  #medevac-kpi-app .filter-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+  #medevac-kpi-app .filter-grid .form-label,#medevac-kpi-app .condition-row .form-label,#medevac-kpi-app .chart-controls .form-label{margin:0;min-width:0}
+  #medevac-kpi-app .filter-grid .wide{grid-column:span 2}
+  #medevac-kpi-app .date-presets{margin:10px 0 14px}
+  #medevac-kpi-app .filter-footer{display:flex;gap:9px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:13px}
+  #medevac-kpi-app .result-sentence{color:var(--muted-foreground)}
+  #medevac-kpi-app .condition-box{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  #medevac-kpi-app .condition-toolbar{display:flex;gap:10px;align-items:end;justify-content:space-between;flex-wrap:wrap}
+  #medevac-kpi-app .condition-list{display:grid;gap:8px;margin-top:10px}
+  #medevac-kpi-app .condition-row{display:grid;grid-template-columns:minmax(160px,1.15fr) minmax(125px,.8fr) minmax(160px,1fr) auto;gap:8px;align-items:end}
+  #medevac-kpi-app .condition-empty{color:var(--muted-foreground);padding:8px 0}
+  #medevac-kpi-app .metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+  #medevac-kpi-app .viz-stat-value{color:var(--navy)}
+  #medevac-kpi-app .charts-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(300px,.9fr);gap:20px;align-items:start;margin-top:20px}
+  #medevac-kpi-app .chart-block{min-width:0}
+  #medevac-kpi-app .chart-controls{align-items:end}
+  #medevac-kpi-app .chart-controls .form-label{min-width:130px}
+  #medevac-kpi-app .chart-frame{position:relative;min-height:255px;width:100%}
+  #medevac-kpi-app .chart-frame svg{display:block;width:100%;height:auto;overflow:visible;color:var(--foreground)}
+  #medevac-kpi-app .chart-empty{min-height:245px;display:grid;place-items:center;color:var(--muted-foreground);text-align:center}
+  #medevac-kpi-app .chart-note,#medevac-kpi-app .table-summary{color:var(--muted-foreground);margin-top:7px}
+  #medevac-kpi-app .donut-layout{display:grid;grid-template-columns:minmax(160px,.9fr) minmax(170px,1.1fr);gap:12px;align-items:center}
+  #medevac-kpi-app .legend{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+  #medevac-kpi-app .legend li{display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:7px;align-items:center}
+  #medevac-kpi-app .legend-swatch{width:10px;height:10px;border-radius:2px}
+  #medevac-kpi-app .toolbar{display:flex;gap:10px;align-items:end;justify-content:space-between;flex-wrap:wrap;margin:10px 0}
+  #medevac-kpi-app .toolbar-group{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+  #medevac-kpi-app .toolbar .form-label{margin:0;min-width:145px}
+  #medevac-kpi-app .preset-strip{padding:12px 0;border-bottom:1px solid var(--line);margin-bottom:14px}
+  #medevac-kpi-app .privacy-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:10px;color:var(--muted-foreground)}
+  #medevac-kpi-app .privacy-controls .form-control{width:80px}
+  #medevac-kpi-app .kpi-table th:first-child{width:38%}
+  #medevac-kpi-app .analysis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+  #medevac-kpi-app .cohort-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+  #medevac-kpi-app .cohort-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #medevac-kpi-app .cohort-fields .form-label{margin:0}
+  #medevac-kpi-app .matrix td,#medevac-kpi-app .matrix th{text-align:center;white-space:nowrap}
+  #medevac-kpi-app .matrix th:first-child{text-align:left;position:sticky;left:0;background:var(--background)}
+  #medevac-kpi-app .heat-cell{background:color-mix(in srgb,var(--viz-series-1) var(--heat,0%),transparent)}
+  #medevac-kpi-app .report-preview{padding:18px 0}
+  #medevac-kpi-app .report-preview h2,#medevac-kpi-app .report-preview h3{color:var(--navy)}
+  #medevac-kpi-app .report-meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted-foreground);margin-bottom:14px}
+  #medevac-kpi-app .report-section{margin-top:20px;break-inside:avoid}
+  #medevac-kpi-app .comparison-positive{color:var(--ok)}#medevac-kpi-app .comparison-negative{color:var(--destructive)}
+  #medevac-kpi-app .privacy-warning{color:var(--warn)}
+  #medevac-kpi-app .quality-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  #medevac-kpi-app .quality-item{padding:10px 0;border-bottom:1px solid var(--line)}
+  #medevac-kpi-app .quality-item strong{display:block;color:var(--navy);font-size:1.25em}
+  #medevac-kpi-app .quality-log{margin:14px 0 0;padding-left:20px;color:var(--muted-foreground)}
+  #medevac-kpi-app .quality-log .bad{color:var(--destructive)}#medevac-kpi-app .quality-log .good{color:var(--ok)}
+  #medevac-kpi-app .empty-pool{padding:30px 12px;text-align:center;color:var(--muted-foreground)}
+  #medevac-kpi-app .app-footer{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--muted-foreground);padding:16px 0 4px;border-top:1px solid var(--line)}
+  #medevac-kpi-app .print-only{display:none}#medevac-kpi-app .nowrap{white-space:nowrap}#medevac-kpi-app .yes{color:var(--ok)}#medevac-kpi-app .no{color:var(--muted-foreground)}#medevac-kpi-app .flag{color:var(--warn)}
+  @media(max-width:900px){#medevac-kpi-app .ai-grid{grid-template-columns:1fr}#medevac-kpi-app .ai-settings{border-left:0;border-top:1px solid var(--line)}#medevac-kpi-app .filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#medevac-kpi-app .charts-grid,#medevac-kpi-app .analysis-grid{grid-template-columns:1fr}#medevac-kpi-app .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:600px){#medevac-kpi-app .filter-grid,#medevac-kpi-app .metrics,#medevac-kpi-app .quality-grid,#medevac-kpi-app .cohort-grid,#medevac-kpi-app .cohort-fields{grid-template-columns:1fr}#medevac-kpi-app .filter-grid .wide{grid-column:auto}#medevac-kpi-app .condition-row{grid-template-columns:1fr;padding-bottom:10px;border-bottom:1px solid var(--line)}#medevac-kpi-app .donut-layout{grid-template-columns:1fr}}
+  @media print{#medevac-kpi-app .screen-only,#medevac-kpi-app .import-section,#medevac-kpi-app .ai-section,#medevac-kpi-app .filter-section,#medevac-kpi-app .tabs,#medevac-kpi-app .pool-actions,#medevac-kpi-app .chart-controls{display:none!important}#medevac-kpi-app .print-only{display:block}#medevac-kpi-app .tab-panel{display:none!important}#medevac-kpi-app #reportPanel{display:block!important;margin-top:0}#medevac-kpi-app .card{break-inside:avoid}#medevac-kpi-app .table-responsive{overflow:visible}#medevac-kpi-app table{font-size:10px}#medevac-kpi-app .report-preview{padding:0}}
+</style>
+
+<main id="medevac-kpi-app">
+  <header class="app-header"><div><h1>Medevac KPI &amp; Analytics</h1><p>Clinical and operational intelligence from Flight Clinical Chart JSON files</p></div><div><div class="privacy-chip">Local analytics + optional AI</div><div class="text-small text-muted">Case data remains in this browser profile</div></div></header>
+  <div class="app-main">
+    <section class="import-section card" aria-labelledby="importHeading">
+      <div class="section-heading"><div><h2 id="importHeading">Case pool</h2><p>Add individual chart backups or select a folder containing many cases.</p></div></div>
+      <div class="import-zone" id="importZone"><div><strong>Drop .flightchart.json files here</strong><br><span class="text-small text-muted">Valid cases are retained locally and duplicate exports are reconciled.</span></div><div class="import-actions"><button type="button" class="btn btn-primary" id="chooseFilesBtn">Add JSON files</button><button type="button" class="btn" id="chooseFolderBtn">Load a folder</button></div><input class="sr-only" id="fileInput" type="file" accept=".json,.flightchart.json,application/json" multiple><input class="sr-only" id="folderInput" type="file" accept=".json,.flightchart.json,application/json" multiple webkitdirectory directory><div class="import-status" id="importStatus" role="status" aria-live="polite">Ready to load chart files.</div></div>
+      <div class="pool-strip"><div><strong id="poolCount">0 cases</strong> <span class="text-small text-muted" id="poolDetails">in the local pool</span></div><div class="pool-actions"><button type="button" class="btn" id="exportAggregateBtn" disabled>Export aggregate CSV</button><button type="button" class="btn" id="exportDeidentifiedCsvBtn" disabled>Export de-identified cases</button><button type="button" class="btn" id="exportIdentifiableCsvBtn" disabled>Export identifiable cases</button><button type="button" class="btn" id="backupPoolBtn" disabled>Back up pool</button><button type="button" class="btn" id="restorePoolBtn">Restore pool</button><button type="button" class="btn" id="printBtn" disabled>Management report</button><button type="button" class="btn btn-ghost" id="clearPoolBtn" disabled>Clear pool</button><input class="sr-only" id="restorePoolInput" type="file" accept=".json,application/json"></div></div>
+    </section>
+
+    <section class="ai-section card screen-only" aria-labelledby="aiHeading">
+      <div class="section-heading"><div><h2 id="aiHeading">Ask AI</h2><p>Type a normal question. The question is translated into the same filters, cross-checks and charts used by the manual analyzer.</p></div><span class="ai-badge" id="aiModeBadge">Local interpreter ready</span></div>
+      <div class="ai-grid">
+        <div>
+          <label class="form-label">Question<textarea class="form-control ai-question" id="aiQuestion" placeholder="Example: How many pediatric patients were intubated in the last 12 months, broken down by clinician?"></textarea></label>
+          <div class="text-small text-muted">Examples: <button type="button" class="ai-example">Which clinicians are associated with the most incomplete charts?</button><button type="button" class="ai-example">Show intubated pediatric cases from last year by month</button><button type="button" class="ai-example">How many ventilated cases had a reanimation episode?</button></div>
+          <div class="ai-actions"><button type="button" class="btn btn-primary" id="runAiBtn">Interpret &amp; run</button><button type="button" class="btn" id="clearAiBtn">New AI question</button><label class="form-check"><input class="form-check-input" id="aiUseContext" type="checkbox" checked><span class="form-check-label">Use previous AI question as context</span></label></div>
+          <div class="ai-status text-small" id="aiStatus">No patient chart data is sent by the built-in interpreter.</div>
+          <div class="ai-result" id="aiResult"><div class="text-muted">Ask a question to run an analysis.</div></div>
+        </div>
+        <details class="ai-settings" id="aiSettings">
+          <summary>Optional online AI connection</summary>
+          <p class="text-small text-muted">For broader language understanding, connect this file to a secure server-side AI proxy. The HTML never needs an API key.</p>
+          <label class="form-label">Mode<select class="form-select" id="aiMode"><option value="auto">Auto — online if configured</option><option value="local">Local interpreter only</option><option value="online">Online AI only</option></select></label>
+          <label class="form-label">AI proxy endpoint<input class="form-control" id="aiEndpoint" type="url" inputmode="url" placeholder="https://your-server.example/kpi-ai-query"></label>
+          <div class="ai-actions"><button type="button" class="btn" id="saveAiSettingsBtn">Save connection</button><button type="button" class="btn btn-ghost" id="testAiBtn">Test</button></div>
+          <p class="text-small text-muted" style="margin-top:8px">Only the typed question, previous query plan, and the allowed analytics field names are sent. Raw case records are not included. Do not type patient names, DOBs, chart numbers, health-card numbers, addresses, or other direct patient identifiers into an online AI question.</p>
+        </details>
+      </div>
+    </section>
+
+    <nav class="tabs screen-only" aria-label="Analysis sections"><button type="button" class="btn" data-tab="dashboardPanel" aria-selected="true">Overview</button><button type="button" class="btn" data-tab="explorePanel" aria-selected="false">Explore charts</button><button type="button" class="btn" data-tab="comparisonPanel" aria-selected="false">Compare</button><button type="button" class="btn" data-tab="crosstabPanel" aria-selected="false">Cross-tab</button><button type="button" class="btn" data-tab="statisticsPanel" aria-selected="false">Statistics</button><button type="button" class="btn" data-tab="vitalPanel" aria-selected="false">Vital signs</button><button type="button" class="btn" data-tab="casesPanel" aria-selected="false">Matching cases</button><button type="button" class="btn" data-tab="qualityPanel" aria-selected="false">Data quality</button><button type="button" class="btn" data-tab="reportPanel" aria-selected="false">Reports</button></nav>
+
+    <section class="filter-section card" aria-labelledby="filterHeading">
+      <div class="section-heading"><div><h2 id="filterHeading">Build your question</h2><p>Every selected criterion is applied to the same pool of unique cases.</p></div><button type="button" class="btn btn-ghost" id="resetFiltersBtn">Reset filters</button></div>
+      <div class="preset-strip"><div class="toolbar"><div class="toolbar-group"><label class="form-label">Quick KPI<select class="form-select" id="quickPreset"><option value="">Choose a common question</option><option value="pediatricIntubated">Pediatric intubated transports</option><option value="infants">Infants under one year</option><option value="lowLevelVented">Low-level ventilated cases</option><option value="reanimations">Reanimations during transport</option><option value="occurrences">Reported occurrences</option><option value="vasoactive">Cases involving vasoactive medication</option></select></label><button type="button" class="btn" id="applyQuickPresetBtn">Apply</button></div><div class="toolbar-group"><label class="form-label">Saved question<select class="form-select" id="savedQuerySelect"><option value="">Choose a saved question</option></select></label><button type="button" class="btn" id="loadSavedQueryBtn">Load</button><button type="button" class="btn" id="saveQueryBtn">Save current</button><button type="button" class="btn btn-ghost" id="deleteSavedQueryBtn">Delete</button></div></div></div>
+      <div class="date-presets" aria-label="Date presets"><button type="button" class="btn btn-primary" data-period="all">All dates</button><button type="button" class="btn" data-period="thisMonth">This month</button><button type="button" class="btn" data-period="lastMonth">Last month</button><button type="button" class="btn" data-period="thisQuarter">This quarter</button><button type="button" class="btn" data-period="thisYear">This year</button><button type="button" class="btn" data-period="lastYear">Last year</button><button type="button" class="btn" data-period="rolling12">Last 12 months</button></div>
+      <div class="filter-grid">
+        <label class="form-label">From date<input class="form-control" id="dateFrom" type="date"></label><label class="form-label">To date<input class="form-control" id="dateTo" type="date"></label>
+        <label class="form-label">Patient category<select class="form-select" id="patientTypeFilter"><option value="">All categories</option></select></label>
+        <label class="form-label">Age group<select class="form-select" id="ageBandFilter"><option value="">All ages</option><option value="neonate">Under 28 days</option><option value="infant">Under 1 year</option><option value="infant28">28 days to under 1 year</option><option value="child">1–17 years</option><option value="adult">18–64 years</option><option value="older">65 years and older</option><option value="unknown">Age not recorded</option></select></label>
+        <label class="form-label">Airway<select class="form-select" id="airwayFilter"><option value="">All airways</option><option value="intubated">Intubated / ETT</option><option value="tracheostomy">Tracheostomy</option><option value="other">Other or no advanced airway</option></select></label>
+        <label class="form-label">Mechanically ventilated<select class="form-select" id="ventilatedFilter"><option value="">All cases</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label class="form-label">Low-level flight<select class="form-select" id="lowLevelFilter"><option value="">All cases</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label class="form-label">Reanimation episode<select class="form-select" id="reanimationFilter"><option value="">All cases</option><option value="yes">Yes</option><option value="no">No</option></select></label>
+        <label class="form-label">Client<select class="form-select" id="clientFilter"><option value="">All clients</option></select></label><label class="form-label">Clinician<select class="form-select" id="clinicianFilter"><option value="">All clinicians</option></select></label>
+        <label class="form-label wide">Search diagnoses, medications, routes or facilities<input class="form-control" id="textFilter" type="search" placeholder="Example: pneumonia, epinephrine, Toronto"></label>
+      </div>
+      <div class="condition-box"><div class="condition-toolbar"><div><strong>Additional cross-checks</strong><div class="text-small text-muted">Combine detailed clinical and operational criteria.</div></div><div class="viz-row"><label class="form-label">Match<select class="form-select" id="conditionMode"><option value="all">all conditions (AND)</option><option value="any">any condition (OR)</option></select></label><button type="button" class="btn" id="addConditionBtn">Add condition</button></div></div><div class="condition-list" id="conditionList"><div class="condition-empty">No additional conditions.</div></div></div>
+      <div class="privacy-controls"><label class="form-check"><input class="form-check-input" id="suppressSmallGroups" type="checkbox"><span class="form-check-label">Suppress small groups in aggregate exports and reports</span></label><label class="form-label">Threshold<input class="form-control" id="suppressionThreshold" type="number" min="2" max="20" value="5"></label><span class="text-small">Counts below the threshold display as &lt;n.</span></div>
+      <div class="filter-footer"><div class="result-sentence" id="resultSentence" aria-live="polite">Load cases to begin an analysis.</div><button type="button" class="btn btn-primary" id="applyFiltersBtn">Apply question</button></div>
+    </section>
+
+    <div class="print-only" id="printQuestion"></div>
+    <section class="tab-panel" id="dashboardPanel">
+      <div class="viz-grid metrics" aria-label="Key results"><div class="card viz-stat"><div class="text-muted">Matching cases</div><div class="viz-stat-value" id="metricCases">0</div><div class="text-small text-muted" id="metricCaseContext">of 0 total</div></div><div class="card viz-stat"><div class="text-muted">Share of pool</div><div class="viz-stat-value" id="metricShare">0%</div><div class="text-small text-muted">Unique missions</div></div><div class="card viz-stat"><div class="text-muted">Intubated / ETT</div><div class="viz-stat-value" id="metricIntubated">0</div><div class="text-small text-muted" id="metricIntubatedPct">0% of matches</div></div><div class="card viz-stat"><div class="text-muted">Mechanically ventilated</div><div class="viz-stat-value" id="metricVented">0</div><div class="text-small text-muted" id="metricVentedPct">0% of matches</div></div></div>
+      <div class="charts-grid"><div class="chart-block"><div class="section-heading"><div><h2>Mission trend</h2><p>Unique matching cases by transport date.</p></div><div class="chart-controls screen-only"><label class="form-label">Interval<select class="form-select" id="trendInterval"><option value="month">Month</option><option value="year">Year</option></select></label><button type="button" class="btn" id="saveTrendBtn">Save SVG</button></div></div><div class="chart-frame" id="trendChart"></div><div class="chart-note text-small" id="trendNote"></div></div>
+      <div class="chart-block"><div class="section-heading"><div><h2>Case breakdown</h2><p id="breakdownSubtitle">Distribution of matching cases.</p></div><div class="chart-controls screen-only"><label class="form-label">Group by<select class="form-select" id="breakdownGroup"><option value="patientType">Patient category</option><option value="ageBand">Age group</option><option value="client">Client</option><option value="sex">Sex</option><option value="airway">Airway</option><option value="ventilated">Mechanical ventilation</option><option value="lowLevel">Low-level flight</option><option value="reanimation">Reanimation</option><option value="complication">Complication</option><option value="category">Clinical category</option><option value="clinicians">Clinician</option><option value="medications">Medication administered</option><option value="receivingFacility">Receiving facility</option><option value="aircraft">Aircraft</option><option value="route">Route</option><option value="occurrencePhases">Occurrence phase</option><option value="sendingFacility">Sending facility</option><option value="lineTypes">Line / tube / drain type</option><option value="ventMode">Ventilator mode</option><option value="deterioration">Documented deterioration</option><option value="delayDocumented">Documented delay</option><option value="temporaryAdmission">Temporary facility admission</option><option value="primaryDiagnosis">Primary diagnosis</option></select></label><label class="form-label">Chart<select class="form-select" id="breakdownType"><option value="bar">Bar</option><option value="donut">Donut / pie</option></select></label><button type="button" class="btn" id="saveBreakdownBtn">Save SVG</button></div></div><div class="chart-frame" id="breakdownChart"></div><div class="chart-note text-small" id="breakdownNote"></div></div></div>
+      <div class="analysis-grid" style="margin-top:20px"><div><div class="section-heading"><div><h2>Clinical and safety KPIs</h2><p>Counts and rates among matching cases.</p></div></div><div class="table-responsive"><table class="table table-sm kpi-table"><thead><tr><th>Indicator</th><th class="text-end">Cases</th><th class="text-end">Rate</th></tr></thead><tbody id="clinicalKpiBody"></tbody></table></div></div><div><div class="section-heading"><div><h2>Operational and workload KPIs</h2><p>Case-level averages and documentation workload.</p></div></div><div class="table-responsive"><table class="table table-sm kpi-table"><thead><tr><th>Indicator</th><th class="text-end">Value</th><th>Unit</th></tr></thead><tbody id="operationalKpiBody"></tbody></table></div></div></div><div class="quality-grid" style="margin-top:20px"><div class="card"><h3>Most frequent medications</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Medication</th><th class="text-end">Cases</th></tr></thead><tbody id="topMedicationsBody"></tbody></table></div></div><div class="card"><h3>Most active clients</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Client</th><th class="text-end">Cases</th></tr></thead><tbody id="topClientsBody"></tbody></table></div></div><div class="card"><h3>Most common diagnoses</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Diagnosis</th><th class="text-end">Cases</th></tr></thead><tbody id="topDiagnosesBody"></tbody></table></div></div></div>
+    </section>
+
+    <section class="tab-panel" id="explorePanel" hidden>
+      <div class="section-heading"><div><h2>Explore charts</h2><p>Choose a visualization suited to the question and current matching cohort.</p></div><button type="button" class="btn screen-only" id="saveExploreBtn">Save SVG</button></div>
+      <div class="toolbar screen-only"><div class="toolbar-group"><label class="form-label">Chart type<select class="form-select" id="exploreChartType"><option value="stacked">Stacked trend</option><option value="histogram">Histogram</option><option value="heatmap">Mission heatmap</option><option value="scatter">Scatter plot</option><option value="box">Box plot</option></select></label><label class="form-label explore-category-control">Category<select class="form-select" id="exploreCategory"><option value="patientType">Patient category</option><option value="ageBand">Age group</option><option value="client">Client</option><option value="airway">Airway</option><option value="ventilated">Mechanical ventilation</option><option value="lowLevel">Low-level flight</option><option value="category">Clinical category</option><option value="aircraft">Aircraft</option><option value="route">Route</option><option value="occurrencePhases">Occurrence phase</option><option value="sendingFacility">Sending facility</option><option value="lineTypes">Line / tube / drain type</option><option value="ventMode">Ventilator mode</option><option value="deterioration">Documented deterioration</option><option value="delayDocumented">Documented delay</option><option value="temporaryAdmission">Temporary facility admission</option><option value="primaryDiagnosis">Primary diagnosis</option></select></label><label class="form-label">Primary measure<select class="form-select" id="exploreMeasure"><option value="ageExactYears">Age (years)</option><option value="weightKg">Weight (kg)</option><option value="durationMinutes">Flight duration (minutes)</option><option value="facilityMinutes">Facility time (minutes)</option><option value="minSpo2">Lowest SpO₂ (%)</option><option value="maxHr">Highest HR (bpm)</option><option value="minMap">Lowest MAP (mmHg)</option><option value="medicationAdministrationCount">Medication administrations</option><option value="vitalCount">Vital-sign observations</option></select></label><label class="form-label explore-secondary-control">Second measure<select class="form-select" id="exploreMeasureY"><option value="minSpo2">Lowest SpO₂ (%)</option><option value="maxHr">Highest HR (bpm)</option><option value="minMap">Lowest MAP (mmHg)</option><option value="durationMinutes">Flight duration (minutes)</option><option value="weightKg">Weight (kg)</option><option value="ageExactYears">Age (years)</option><option value="medicationAdministrationCount">Medication administrations</option></select></label></div></div>
+      <div class="chart-frame" id="exploreChart"></div><div class="chart-note text-small" id="exploreNote"></div>
+    </section>
+
+    <section class="tab-panel" id="comparisonPanel" hidden>
+      <div class="section-heading"><div><h2>Compare two cohorts</h2><p>Compare periods, patient categories, ventilation status, clients, or other operational groups.</p></div></div>
+      <div class="cohort-grid screen-only"><div class="card"><h3>Cohort A</h3><div class="cohort-fields"><label class="form-label">Label<input class="form-control" id="cohortALabel" type="text" value="Cohort A"></label><label class="form-label">Criterion<select class="form-select cohort-criterion" id="cohortACriterion"><option value="all">All matching cases</option><option value="patientType">Patient category</option><option value="ventilated">Mechanical ventilation</option><option value="intubated">Intubation</option><option value="lowLevel">Low-level flight</option><option value="reanimation">Reanimation</option><option value="complication">Complication</option><option value="occurrence">Occurrence</option><option value="vasoactive">Vasoactive medication</option><option value="deterioration">Documented deterioration</option><option value="delayDocumented">Documented delay</option><option value="aircraft">Aircraft</option><option value="client">Client</option></select></label><label class="form-label">Value<select class="form-select" id="cohortAValue"><option value="">All</option></select></label><label class="form-label">From<input class="form-control" id="cohortAFrom" type="date"></label><label class="form-label">To<input class="form-control" id="cohortATo" type="date"></label></div></div><div class="card"><h3>Cohort B</h3><div class="cohort-fields"><label class="form-label">Label<input class="form-control" id="cohortBLabel" type="text" value="Cohort B"></label><label class="form-label">Criterion<select class="form-select cohort-criterion" id="cohortBCriterion"><option value="all">All matching cases</option><option value="patientType">Patient category</option><option value="ventilated">Mechanical ventilation</option><option value="intubated">Intubation</option><option value="lowLevel">Low-level flight</option><option value="reanimation">Reanimation</option><option value="complication">Complication</option><option value="occurrence">Occurrence</option><option value="vasoactive">Vasoactive medication</option><option value="deterioration">Documented deterioration</option><option value="delayDocumented">Documented delay</option><option value="aircraft">Aircraft</option><option value="client">Client</option></select></label><label class="form-label">Value<select class="form-select" id="cohortBValue"><option value="">All</option></select></label><label class="form-label">From<input class="form-control" id="cohortBFrom" type="date"></label><label class="form-label">To<input class="form-control" id="cohortBTo" type="date"></label></div></div></div>
+      <div class="toolbar screen-only"><div class="toolbar-group"><button type="button" class="btn" id="previousPeriodBtn">Set B to previous period</button><button type="button" class="btn btn-primary" id="runComparisonBtn">Run comparison</button></div></div>
+      <div class="analysis-grid"><div><div class="table-responsive"><table class="table table-sm"><thead id="comparisonHead"></thead><tbody id="comparisonBody"></tbody></table></div></div><div><div class="chart-frame" id="comparisonChart"></div></div></div>
+    </section>
+
+    <section class="tab-panel" id="crosstabPanel" hidden>
+      <div class="section-heading"><div><h2>Cross-tabulation</h2><p>Cross-check two categorical measures using counts, row percentages, or total percentages.</p></div><button type="button" class="btn screen-only" id="exportCrosstabBtn">Export aggregate CSV</button></div>
+      <div class="toolbar screen-only"><div class="toolbar-group"><label class="form-label">Rows<select class="form-select" id="crosstabRows"></select></label><label class="form-label">Columns<select class="form-select" id="crosstabColumns"></select></label><label class="form-label">Display<select class="form-select" id="crosstabDisplay"><option value="count">Counts</option><option value="rowPct">Row percentages</option><option value="totalPct">Percent of total</option></select></label></div></div>
+      <div class="table-summary" id="crosstabSummary"></div><div class="table-responsive"><table class="table table-sm matrix" id="crosstabTable"></table></div><div class="text-small text-muted" id="crosstabNote"></div>
+    </section>
+
+    <section class="tab-panel" id="statisticsPanel" hidden><div class="section-heading"><div><h2>Statistical summary</h2><p>Each case contributes one value so cases with more observations do not carry extra weight.</p></div></div><div class="table-summary" id="statsSummary">No matching cases.</div><div class="table-responsive"><table class="table table-sm" aria-label="Statistical summary"><thead><tr><th>Measure</th><th class="text-end">n</th><th class="text-end">Mean</th><th class="text-end">Median</th><th class="text-end">SD</th><th class="text-end">Minimum</th><th class="text-end">Q1–Q3</th><th class="text-end">Maximum</th></tr></thead><tbody id="statsBody"></tbody></table></div></section><section class="tab-panel" id="vitalPanel" hidden><div class="section-heading"><div><h2>Vital-sign analysis</h2><p>Extremes, pickup-to-arrival change, documented deterioration, and observation trends by transport phase.</p></div></div><div class="viz-grid metrics" aria-label="Vital-sign results"><div class="card viz-stat"><div class="text-muted">Cases with vital signs</div><div class="viz-stat-value" id="vitalCases">0</div><div class="text-small text-muted" id="vitalCasesPct">0% of matches</div></div><div class="card viz-stat"><div class="text-muted">Documented deterioration</div><div class="viz-stat-value" id="vitalDeterioration">0</div><div class="text-small text-muted" id="vitalDeteriorationPct">0% of matches</div></div><div class="card viz-stat"><div class="text-muted">Mean lowest SpO₂</div><div class="viz-stat-value" id="vitalMeanSpo2">—</div><div class="text-small text-muted">case-level minimum</div></div><div class="card viz-stat"><div class="text-muted">Mean lowest MAP</div><div class="viz-stat-value" id="vitalMeanMap">—</div><div class="text-small text-muted">case-level minimum</div></div></div><div class="analysis-grid" style="margin-top:20px"><div><h3>Case-level vital-sign measures</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Measure</th><th class="text-end">n</th><th class="text-end">Mean</th><th class="text-end">Median</th><th class="text-end">Minimum</th><th class="text-end">Maximum</th></tr></thead><tbody id="vitalSummaryBody"></tbody></table></div></div><div><h3>Transport-phase observations</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Phase</th><th class="text-end">Observations</th><th class="text-end">Mean HR</th><th class="text-end">Mean SpO₂</th><th class="text-end">Mean MAP</th><th class="text-end">Mean Temp</th><th class="text-end">Mean Glucose</th></tr></thead><tbody id="vitalPhaseBody"></tbody></table></div></div></div><div class="text-small text-muted" style="margin-top:10px">“Documented deterioration” is based only on explicit deterioration/decompensation/worsening language present in the chart; it is not an inferred clinical severity score.</div></section>
+    <section class="tab-panel" id="casesPanel" hidden><div class="section-heading"><div><h2>Matching cases</h2><p>Identifiers are concealed unless you explicitly reveal them.</p></div><label class="form-check screen-only"><input class="form-check-input" id="showIdentifiers" type="checkbox"><span class="form-check-label">Show patient identifiers</span></label></div><div class="table-summary" id="caseSummary">No matching cases.</div><div class="table-responsive"><table class="table table-sm" aria-label="Matching cases"><thead id="caseHead"></thead><tbody id="caseBody"></tbody></table></div></section>
+    <section class="tab-panel" id="qualityPanel" hidden><div class="section-heading"><div><h2>Data quality</h2><p>Import validation and fields that can affect KPI accuracy.</p></div></div><div class="quality-grid" id="qualityGrid"></div><div class="analysis-grid" style="margin-top:18px"><div><h3>Documentation completeness</h3><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Required element</th><th class="text-end">Complete</th><th class="text-end">Missing</th><th class="text-end">Completion</th></tr></thead><tbody id="completenessBody"></tbody></table></div></div><div><h3>Completion profile</h3><div class="chart-frame" id="completenessChart"></div></div></div><ul class="quality-log" id="qualityLog"><li>No import activity yet.</li></ul><details style="margin-top:16px"><summary><strong>KPI calculation rules</strong></summary><ul><li>A unique case is identified by trip number, mission date and patient identifier; the newest export is retained.</li><li>Intubated means the airway is documented as ETT or endotracheal. Mechanical ventilation is measured separately.</li><li>Age is calculated from DOB on the mission date. Under one year means the mission occurred before the first birthday.</li><li>Reanimation medications mirrored into the main administration table are recognized through their source identifiers and are not counted twice.</li><li>Statistical vital-sign measures use one summarized value per case, so cases with more observations do not carry extra weight.</li></ul></details></section>
+
+    <section class="tab-panel" id="reportPanel" hidden><div class="section-heading screen-only"><div><h2>Management reports</h2><p>Create a standardized monthly, quarterly, annual, or current-filter report without patient identifiers.</p></div></div><div class="toolbar screen-only"><div class="toolbar-group"><label class="form-label">Report title<input class="form-control" id="reportTitle" type="text" value="Medevac Clinical &amp; Operational KPI Report"></label><label class="form-label">Reporting period<select class="form-select" id="reportPeriod"><option value="current">Current filtered cohort</option><option value="thisMonth">Current calendar month</option><option value="lastMonth">Last calendar month</option><option value="thisQuarter">Current quarter</option><option value="lastQuarter">Previous quarter</option><option value="thisYear">Current calendar year</option><option value="lastYear">Previous calendar year</option></select></label><label class="form-check"><input class="form-check-input" id="reportComparePrevious" type="checkbox" checked><span class="form-check-label">Compare with previous period</span></label><label class="form-label">Saved setup<select class="form-select" id="reportPresetSelect"><option value="">Choose a saved setup</option></select></label><button type="button" class="btn" id="loadReportPresetBtn">Load setup</button><button type="button" class="btn" id="saveReportPresetBtn">Save setup</button><button type="button" class="btn btn-ghost" id="deleteReportPresetBtn">Delete</button><button type="button" class="btn" id="generateReportBtn">Generate preview</button><button type="button" class="btn btn-primary" id="printReportBtn">Save report as PDF</button></div></div><div class="report-preview" id="reportPreview"><div class="empty-pool">Generate a report preview from the current case pool.</div></div></section>
+    <div class="empty-pool" id="emptyPoolMessage">Add Flight Clinical Chart JSON files to populate the dashboard.</div>
+    <footer class="app-footer"><span>Medevac KPI &amp; Analytics v1.3 AI</span><span>By Spiros Konstas RN ©</span></footer>
+  </div>
+</main>
+
+<script>
+(function(){
+"use strict";
+var root=document.getElementById("medevac-kpi-app");
+var $=function(s){return root.querySelector(s)},$$=function(s){return Array.from(root.querySelectorAll(s))};
+var DB_NAME="medevac-kpi-analytics-v1",DB_STORE="cases",SETTINGS_KEY="medevac-kpi-settings-v1",db=null,storedCases=[],records=[],filteredRecords=[],conditionSequence=0,importLog=[],savedQueries=[],savedReports=[],lastCrosstab=null,aiLastPlan=null,aiLastQuestion="";
+var sessionImport={read:0,added:0,updated:0,duplicates:0,invalid:0};
+var fieldDefinitions={
+patientType:{label:"Patient category",type:"text",get:function(r){return r.patientType}},ageYears:{label:"Age in completed years",type:"number",get:function(r){return r.ageYears}},ageDays:{label:"Age in days",type:"number",get:function(r){return r.ageDays}},infant:{label:"Under one year old",type:"boolean",get:function(r){return r.underOne}},intubated:{label:"Intubated / ETT",type:"boolean",get:function(r){return r.intubated}},ventilated:{label:"Mechanically ventilated",type:"boolean",get:function(r){return r.ventilated}},lowLevel:{label:"Low-level flight",type:"boolean",get:function(r){return r.lowLevel}},reanimation:{label:"Had reanimation episode",type:"boolean",get:function(r){return r.reanimationCount>0}},reanimationCount:{label:"Number of reanimation episodes",type:"number",get:function(r){return r.reanimationCount}},complication:{label:"Complication documented",type:"boolean",get:function(r){return r.complication}},occurrence:{label:"Occurrence reported",type:"boolean",get:function(r){return r.occurrence}},missionDate:{label:"Mission date",type:"date",get:function(r){return r.missionDate}},client:{label:"Client",type:"text",get:function(r){return r.client}},sex:{label:"Sex",type:"text",get:function(r){return r.sex}},category:{label:"Clinical category",type:"text",get:function(r){return r.category}},diagnosis:{label:"Diagnosis",type:"text",get:function(r){return r.diagnosisSearch}},clinician:{label:"Assigned clinician",type:"list",get:function(r){return r.clinicians}},medication:{label:"Medication administered",type:"list",get:function(r){return r.medications}},facility:{label:"Facility or route",type:"list",get:function(r){return r.facilitiesRoutes}},airway:{label:"Airway type",type:"text",get:function(r){return r.airwayType}},weight:{label:"Weight (kg)",type:"number",get:function(r){return r.weightKg}},duration:{label:"Flight duration (minutes)",type:"number",get:function(r){return r.durationMinutes}},medicationCount:{label:"Number of medication administrations",type:"number",get:function(r){return r.medicationAdministrationCount}}
+};
+fieldDefinitions.vasoactive={label:"Vasoactive medication involved",type:"boolean",get:function(r){return r.vasoactive}};
+fieldDefinitions.lineCount={label:"Number of lines / tubes / drains",type:"number",get:function(r){return r.lineCount}};
+fieldDefinitions.lineType={label:"Line / tube / drain type",type:"list",get:function(r){return r.lineTypes}};
+fieldDefinitions.labCount={label:"Number of laboratory results",type:"number",get:function(r){return r.labCount}};
+fieldDefinitions.vitalCount={label:"Number of vital-sign observations",type:"number",get:function(r){return r.vitalCount}};
+fieldDefinitions.infusionCount={label:"Number of continuous infusions",type:"number",get:function(r){return r.infusionCount}};
+fieldDefinitions.facilityMinutes={label:"Facility time (minutes)",type:"number",get:function(r){return r.facilityMinutes}};
+fieldDefinitions.pickupToHandoffMinutes={label:"Pickup-to-handoff time (minutes)",type:"number",get:function(r){return r.pickupToHandoffMinutes}};
+fieldDefinitions.deterioration={label:"Documented deterioration",type:"boolean",get:function(r){return r.deterioration}};
+fieldDefinitions.delayDocumented={label:"Documented delay",type:"boolean",get:function(r){return r.delayDocumented}};
+fieldDefinitions.temporaryAdmission={label:"Temporary facility admission",type:"boolean",get:function(r){return r.temporaryAdmission}};
+fieldDefinitions.minSpo2={label:"Lowest SpO₂ (%)",type:"number",get:function(r){return r.minSpo2}};
+fieldDefinitions.minMap={label:"Lowest MAP (mmHg)",type:"number",get:function(r){return r.minMap}};
+fieldDefinitions.minHr={label:"Lowest heart rate (bpm)",type:"number",get:function(r){return r.minHr}};
+fieldDefinitions.maxHr={label:"Highest heart rate (bpm)",type:"number",get:function(r){return r.maxHr}};
+fieldDefinitions.documentationCompleteness={label:"Documentation completeness (%)",type:"number",get:function(r){return r.completenessPercent}};
+fieldDefinitions.preFlightAssessment={label:"Pre-flight assessment completed",type:"boolean",get:function(r){return !!(r.completeness&&r.completeness.preFlightAssessment)}};
+fieldDefinitions.preFlightChecklist={label:"Pre-flight checklist completed",type:"boolean",get:function(r){return !!(r.completeness&&r.completeness.preFlightChecklist)}};
+fieldDefinitions.postFlightChecklist={label:"Post-flight checklist completed",type:"boolean",get:function(r){return !!(r.completeness&&r.completeness.postFlightChecklist)}};
+fieldDefinitions.occurrenceForm={label:"Occurrence form recorded",type:"boolean",get:function(r){return !!(r.completeness&&r.completeness.occurrenceForm)}};
+fieldDefinitions.operationalForms={label:"All operational forms recorded",type:"boolean",get:function(r){return !!(r.completeness&&r.completeness.operationalForms)}};
+var breakdownDefinitions={
+patientType:{label:"Patient category",values:function(r){return[r.patientType||"Not recorded"]}},ageBand:{label:"Age group",values:function(r){return[r.ageBand||"Not recorded"]}},client:{label:"Client",values:function(r){return[r.client||"Not recorded"]}},sex:{label:"Sex",values:function(r){return[r.sex||"Not recorded"]}},airway:{label:"Airway",values:function(r){return[r.intubated?"Intubated / ETT":r.tracheostomy?"Tracheostomy":r.airwayType||"Other / not recorded"]}},ventilated:{label:"Mechanical ventilation",values:function(r){return[r.ventilated?"Ventilated":"Not ventilated"]}},lowLevel:{label:"Low-level flight",values:function(r){return[r.lowLevel?"Low-level":"Not low-level"]}},reanimation:{label:"Reanimation",values:function(r){return[r.reanimationCount>0?"Reanimation recorded":"No reanimation"]}},complication:{label:"Complication",values:function(r){return[r.complication?"Complication documented":"No complication documented"]}},category:{label:"Clinical category",values:function(r){return[r.category||"Not recorded"]}},clinicians:{label:"Clinician",multi:true,values:function(r){return r.clinicians.length?r.clinicians:["Not recorded"]}},medications:{label:"Medication administered",multi:true,values:function(r){return r.medications.length?r.medications:["None recorded"]}},receivingFacility:{label:"Receiving facility",values:function(r){return[r.receivingFacility||"Not recorded"]}}
+};
+breakdownDefinitions.occurrence={label:"Occurrence",values:function(r){return[r.occurrence?"Occurrence reported":"No occurrence"]}};
+breakdownDefinitions.occurrencePhases={label:"Occurrence phase",multi:true,values:function(r){return r.occurrencePhases.length?r.occurrencePhases:["No phase recorded"]}};
+breakdownDefinitions.aircraft={label:"Aircraft",values:function(r){return[r.aircraft||"Not recorded"]}};
+breakdownDefinitions.route={label:"Route",values:function(r){return[r.route||"Not recorded"]}};
+breakdownDefinitions.sendingFacility={label:"Sending facility",values:function(r){return[r.sendingFacility||"Not recorded"]}};
+breakdownDefinitions.lineTypes={label:"Line / tube / drain type",multi:true,values:function(r){return r.lineTypes.length?r.lineTypes:["None recorded"]}};
+breakdownDefinitions.ventMode={label:"Ventilator mode",values:function(r){return[r.ventMode||"Not recorded"]}};
+breakdownDefinitions.deterioration={label:"Documented deterioration",values:function(r){return[r.deterioration?"Deterioration documented":"No deterioration documented"]}};
+breakdownDefinitions.delayDocumented={label:"Documented delay",values:function(r){return[r.delayDocumented?"Delay documented":"No delay documented"]}};
+breakdownDefinitions.temporaryAdmission={label:"Temporary facility admission",values:function(r){return[r.temporaryAdmission?"Temporary admission documented":"No temporary admission documented"]}};
+breakdownDefinitions.primaryDiagnosis={label:"Primary diagnosis",values:function(r){return[r.primaryDiagnosis||"Not recorded"]}};
+var numericMeasures={ageExactYears:{label:"Age (years)",get:function(r){return r.ageExactYears}},weightKg:{label:"Weight (kg)",get:function(r){return r.weightKg}},durationMinutes:{label:"Patient flight duration (minutes)",get:function(r){return r.durationMinutes}},facilityMinutes:{label:"Facility time (minutes)",get:function(r){return r.facilityMinutes}},pickupToHandoffMinutes:{label:"Pickup-to-handoff time (minutes)",get:function(r){return r.pickupToHandoffMinutes}},minSpo2:{label:"Lowest SpO₂ (%)",get:function(r){return r.minSpo2}},minMap:{label:"Lowest MAP (mmHg)",get:function(r){return r.minMap}},minHr:{label:"Lowest HR (bpm)",get:function(r){return r.minHr}},maxHr:{label:"Highest HR (bpm)",get:function(r){return r.maxHr}},minTemp:{label:"Lowest temperature",get:function(r){return r.minTemp}},maxTemp:{label:"Highest temperature",get:function(r){return r.maxTemp}},minGlucose:{label:"Lowest glucose",get:function(r){return r.minGlucose}},maxGlucose:{label:"Highest glucose",get:function(r){return r.maxGlucose}},spo2Change:{label:"Pickup-to-arrival SpO₂ change",get:function(r){return r.spo2Change}},mapChange:{label:"Pickup-to-arrival MAP change",get:function(r){return r.mapChange}},hrChange:{label:"Pickup-to-arrival HR change",get:function(r){return r.hrChange}},medicationAdministrationCount:{label:"Medication administrations",get:function(r){return r.medicationAdministrationCount}},infusionCount:{label:"Continuous infusions",get:function(r){return r.infusionCount}},vitalCount:{label:"Vital-sign observations",get:function(r){return r.vitalCount}},lineCount:{label:"Lines / tubes / drains",get:function(r){return r.lineCount}},labCount:{label:"Laboratory results",get:function(r){return r.labCount}}};
+function esc(v){return String(v==null?"":v).replace(/[&<>\"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]})}
+function clean(v){return String(v==null?"":v).trim()}function lower(v){return clean(v).toLocaleLowerCase()}
+function truthy(v){return v===true||v===1||["true","yes","y","1","checked"].indexOf(lower(v))>=0}
+function numeric(v){var m=clean(v).replace(/,/g,".").match(/-?\d+(?:\.\d+)?/);return m?Number(m[0]):null}function isNum(v){return typeof v==="number"&&Number.isFinite(v)}
+function parseDate(v){var m=clean(v).match(/^(\d{4})-(\d{2})-(\d{2})/);if(!m)return null;var d=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));return Number.isNaN(d.getTime())?null:d}function isoDate(d){return d?d.toISOString().slice(0,10):""}
+function completedYears(dob,on){if(!dob||!on||on<dob)return null;var y=on.getUTCFullYear()-dob.getUTCFullYear(),a=new Date(Date.UTC(on.getUTCFullYear(),dob.getUTCMonth(),dob.getUTCDate()));return on<a?y-1:y}
+function ageDetails(dobText,dateText){var dob=parseDate(dobText),date=parseDate(dateText);if(!dob||!date||date<dob)return{days:null,years:null,exactYears:null,underOne:false,band:"Not recorded",display:"—"};var days=Math.floor((date-dob)/864e5),years=completedYears(dob,date),birthday=new Date(Date.UTC(dob.getUTCFullYear()+1,dob.getUTCMonth(),dob.getUTCDate())),underOne=date<birthday,band,display;if(days<28){band="Under 28 days";display=days+" d"}else if(underOne){band="28 days–<1 year";display=Math.max(1,Math.floor(days/30.4375))+" mo"}else if(years<18){band="1–17 years";display=years+" y"}else if(years<65){band="18–64 years";display=years+" y"}else{band="65 years and older";display=years+" y"}return{days:days,years:years,exactYears:days/365.2425,underOne:underOne,band:band,display:display}}
+function extractRows(fields,prefix){var grouped={},re=new RegExp("^"+prefix+"\\.(\\d+)\\.(.+)$");Object.keys(fields||{}).forEach(function(k){var m=k.match(re);if(!m)return;if(!grouped[m[1]])grouped[m[1]]={};grouped[m[1]][m[2]]=fields[k]});return Object.keys(grouped).sort(function(a,b){return+a-+b}).map(function(k){return grouped[k]}).filter(function(row){return Object.keys(row).some(function(k){return k!=="source"&&clean(row[k])!==""})})}
+function uniqueText(values){var seen=new Map;values.forEach(function(v){var d=clean(v),k=lower(d);if(d&&!seen.has(k))seen.set(k,d)});return Array.from(seen.values())}
+function medicationList(values){var seen=new Map;values.forEach(function(v){var display=clean(v).replace(/\s*\([^)]*\)\s*$/,""),key=lower(display);if(display&&!seen.has(key))seen.set(key,display)});return Array.from(seen.values())}
+function parseDateTime(date,time){if(!clean(date)||!clean(time))return null;var d=new Date(clean(date)+"T"+clean(time)+":00");return Number.isNaN(d.getTime())?null:d}
+function legMinutes(row){var a=parseDateTime(row.takeoff_date,row.takeoff_time),b=parseDateTime(row.landing_date,row.landing_time);return!a||!b||b<a?null:Math.round((b-a)/6e4)}
+function stopMinutes(row){var a=parseDateTime(row.arrival_date,row.arrival_time),b=parseDateTime(row.departure_date,row.departure_time);return!a||!b||b<a?null:Math.round((b-a)/6e4)}
+function normalizeCase(stored){
+ var data=stored.data||{},chart=data.chart||{},f=chart.fields||{},missionDate=clean(f["transport.chart_date"]),age=ageDetails(f["patient.dob"],missionDate),airwayType=clean(f["airway.type"]),air=lower(airwayType),intubated=air==="ett"||air.indexOf("endotracheal")>=0,tracheostomy=air.indexOf("trach")>=0;
+ var crew=extractRows(f,"assignedCrew"),admin=extractRows(f,"admin"),current=extractRows(f,"currentMeds"),vitals=extractRows(f,"vitals"),itinerary=extractRows(f,"itinerary"),stops=extractRows(f,"facilityStops"),io=extractRows(f,"io"),lines=extractRows(f,"lines"),labs=extractRows(f,"lab"),communications=extractRows(f,"communications"),timeline=extractRows(f,"timeline"),progress=extractRows(f,"progress"),continuation=extractRows(f,"continuation"),episodes=Array.isArray(chart.reanimationEpisodes)?chart.reanimationEpisodes:[],actionMeds=[],adminSources=new Set(admin.map(function(r){return clean(r.source)})),orphanActionMeds=0;
+ episodes.forEach(function(ep){(Array.isArray(ep.actions)?ep.actions:[]).forEach(function(a){if(lower(a.action)==="medications"||clean(a.medication)){actionMeds.push(a.medication);if(!adminSources.has("reanimation:"+clean(ep.id)+":"+clean(a.id)))orphanActionMeds++}})});
+ var medications=medicationList(admin.map(function(r){return r.medication}).concat(actionMeds)),currentMeds=medicationList(current.map(function(r){return r.name})),clinicians=uniqueText(crew.map(function(r){return r.name})),lineTypes=uniqueText(lines.map(function(r){return r.type})),routes=[];
+ itinerary.forEach(function(r){if(clean(r.from)||clean(r.to))routes.push([clean(r.from),clean(r.to)].filter(Boolean).join(" → "))});
+ var facilities=uniqueText([f["facility.discharge.name"],f["facility.receiving.name"],f["facility.discharge.location"],f["facility.receiving.location"]].concat(stops.reduce(function(a,r){return a.concat([r.facility,r.location])},[]),routes));
+ var patientLegs=itinerary.filter(function(r){return lower(r.leg_type).indexOf("patient")>=0}),durationRows=patientLegs.length?patientLegs:itinerary,durations=durationRows.map(legMinutes).filter(isNum),duration=durations.length?durations.reduce(function(a,b){return a+b},0):null,facilityDurations=stops.map(stopMinutes).filter(isNum),facilityMinutes=facilityDurations.length?facilityDurations.reduce(function(a,b){return a+b},0):null;
+ var spo2=vitals.map(function(r){return numeric(r.spo2)}).filter(isNum),hr=vitals.map(function(r){return numeric(r.hr)}).filter(isNum),maps=vitals.map(function(r){return numeric(r.map)}).filter(isNum),temps=vitals.map(function(r){return numeric(r.temp)}).filter(isNum),glucose=vitals.map(function(r){return numeric(r.glucose)}).filter(isNum),intake=numeric(f["io.total_intake"]),output=numeric(f["io.total_output"]);
+ var vitalObservations=vitals.map(function(r){return{date:clean(r.date),time:clean(r.time),phase:clean(r.phase)||"Not recorded",hr:numeric(r.hr),spo2:numeric(r.spo2),map:numeric(r.map),temp:numeric(r.temp),glucose:numeric(r.glucose)}}),orderedVitals=vitals.map(function(r){return{row:r,date:parseDateTime(r.date,r.time)}}).filter(function(x){return x.date}).sort(function(a,b){return a.date-b.date}),firstVital=orderedVitals.length?orderedVitals[0].row:null,lastVital=orderedVitals.length?orderedVitals[orderedVitals.length-1].row:null;
+ var pickupCandidates=orderedVitals.filter(function(x){return/(hospital|pickup|source|ground|pre[- ]?flight)/.test(lower(x.row.phase))}),arrivalCandidates=orderedVitals.filter(function(x){return/(arrival|receiv|handoff|destination)/.test(lower(x.row.phase))}),pickupVital=pickupCandidates.length?pickupCandidates[0].row:firstVital,arrivalVital=arrivalCandidates.length?arrivalCandidates[arrivalCandidates.length-1].row:lastVital;
+ var firstPickup=stops.map(function(r){return parseDateTime(r.arrival_date,r.arrival_time)}).filter(Boolean).sort(function(a,b){return a-b})[0]||null,handoffTime=parseDateTime(f["handoff.date"],f["handoff.time"]),pickupToHandoff=firstPickup&&handoffTime&&handoffTime>=firstPickup?Math.round((handoffTime-firstPickup)/6e4):null;
+ if(!isNum(intake)){var ins=io.filter(function(r){return lower(r.category).indexOf("intake")>=0||/fluid|blood|feed/.test(lower(r.category))}).map(function(r){return numeric(r.amount)}).filter(isNum);intake=ins.length?ins.reduce(function(a,b){return a+b},0):null}if(!isNum(output)){var outs=io.filter(function(r){return/(output|urine|drain|emesis|stool)/.test(lower(r.category))}).map(function(r){return numeric(r.amount)}).filter(isNum);output=outs.length?outs.reduce(function(a,b){return a+b},0):null}
+ var diagnosis=[f["clinical.primary_diagnosis"],f["clinical.secondary_diagnoses"]].filter(Boolean).join("; "),patientName=[f["patient.first_name"],f["patient.last_name"]].filter(Boolean).join(" "),search=uniqueText([f["transport.trip_number"],f["transport.requested_by"],f["transport.flight_number"],diagnosis,f["facility.discharge.name"],f["facility.receiving.name"]].concat(clinicians,medications,currentMeds,facilities,routes,lineTypes)).join(" | ").toLocaleLowerCase(),allMedicationNames=medications.concat(currentMeds).map(lower),vasoactive=allMedicationNames.some(function(n){return/(norepinephrine|epinephrine|vasopressin|dopamine|dobutamine|phenylephrine|milrinone)/.test(n)}),continuousMeds=medicationList(current.filter(function(r){return lower(r.frequency).indexOf("continuous")>=0}).map(function(r){return r.name})),operational=chart.operationalForms||{},phaseLabels={dischargingFacility:"Discharging facility",firstGroundTransfer:"First ground transfer",w2w:"Wing-to-wing",airTransfer:"Air transfer",secondGroundTransfer:"Second ground transfer",admittingFacility:"Admitting facility",other:"Other"},phaseObject=((operational.occurrence||{}).phases||{}),occurrencePhases=Object.keys(phaseObject).filter(function(k){return truthy(phaseObject[k])}).map(function(k){return phaseLabels[k]||k});
+ var narrative=uniqueText([f["operations.events"],f["summary.clinical_course"],f["summary.complication_details"],f["summary.arrival_condition"]].concat(timeline.map(function(r){return r.note}),progress.map(function(r){return r.note}),continuation.map(function(r){return r.note}),stops.reduce(function(a,r){return a.concat([r.event,r.notes,r.reason_status])},[]),itinerary.map(function(r){return r.comments}))).join(" | ").toLocaleLowerCase(),deterioration=/(deteriorat|decompensat|clinical decline|worsen(?:ed|ing)?)/.test(narrative),delayDocumented=/(\bdelay(?:ed|s)?\b|\bwaiting\b|\bwaited\b|\bground stop\b|\bmechanical issue\b|\bweather delay\b)/.test(narrative),temporaryAdmission=/(temporary admission|temporarily admitted|admitted temporarily|temporary facility admission)/.test(narrative);
+ var formsPresent=["preFlightAssessment","preFlightChecklist","postFlightChecklist","occurrence"].every(function(k){return operational[k]&&typeof operational[k]==="object"&&Object.keys(operational[k]).length>0}),preItems=((operational.preFlightChecklist||{}).items||{}),postItems=((operational.postFlightChecklist||{}).items||{}),preComplete=Object.keys(preItems).length>0&&Object.keys(preItems).every(function(k){return clean((preItems[k]||{}).initials)}),postComplete=Object.keys(postItems).length>0&&Object.keys(postItems).every(function(k){return clean((postItems[k]||{}).initials)}),occurrenceForm=operational.occurrence&&typeof operational.occurrence==="object"&&Object.keys(operational.occurrence).length>0;
+ var completeness={missionDate:!!parseDate(missionDate),trip:!!clean(f["transport.trip_number"]),dob:!!parseDate(f["patient.dob"]),patientType:!!clean(f["patient.type"]),client:!!clean(f["transport.requested_by"]),diagnosis:!!clean(f["clinical.primary_diagnosis"]),clinician:crew.some(function(r){return clean(r.name)&&clean(r.license)}),handoff:!!clean(f["handoff.received_by"])&&!!parseDate(f["handoff.date"])&&!!clean(f["handoff.time"]),arrivalVitals:vitals.some(function(r){return/(arrival|receiv|handoff|destination)/.test(lower(r.phase))}),operationalForms:formsPresent,preFlightAssessment:!!(operational.preFlightAssessment&&Object.keys(operational.preFlightAssessment).length),preFlightChecklist:preComplete,postFlightChecklist:postComplete,occurrenceForm:!!occurrenceForm,itinerary:itinerary.length>0};
+ var completenessKeys=Object.keys(completeness),completenessCount=completenessKeys.filter(function(k){return completeness[k]}).length,completenessPercent=completenessKeys.length?100*completenessCount/completenessKeys.length:null;
+ function change(a,b,key){var x=a&&numeric(a[key]),y=b&&numeric(b[key]);return isNum(x)&&isNum(y)?y-x:null}
+ return{dedupeKey:stored.dedupeKey,sourceName:stored.sourceName,chartId:clean(chart.id),appVersion:clean(chart.appVersion),updatedAt:clean(chart.updatedAt||data.exportedAt),missionDate:missionDate,tripNumber:clean(f["transport.trip_number"]),client:clean(f["transport.requested_by"]),flightNumber:clean(f["transport.flight_number"]),aircraft:clean(f["transport.aircraft_tail"]),patientName:patientName,patientIdentifier:clean(f["patient.identifier"]),dob:clean(f["patient.dob"]),ageDays:age.days,ageYears:age.years,ageExactYears:age.exactYears,ageDisplay:age.display,underOne:age.underOne,ageBand:age.band,patientType:clean(f["patient.type"]),sex:clean(f["patient.sex"]),weightKg:numeric(f["patient.weight_kg"]),category:clean(f["clinical.category"]),primaryDiagnosis:clean(f["clinical.primary_diagnosis"]),diagnosisSearch:diagnosis,airwayType:airwayType,intubated:intubated,tracheostomy:tracheostomy,ventilated:truthy(f["vent.vented_patient"]),ventMode:clean(f["vent.mode"]),lowLevel:truthy(f["operations.low_level_flight"]),complication:truthy(f["summary.complications"]),occurrence:truthy((((chart.operationalForms||{}).occurrence||{}).hasIssue)),occurrencePhases:occurrencePhases,reanimationCount:episodes.length,clinicians:clinicians,medications:medications,medicationAdministrationCount:admin.length+orphanActionMeds,currentMedications:currentMeds,continuousMedicationCount:continuousMeds.length,infusionCount:continuousMeds.length,vasoactive:vasoactive,lineTypes:lineTypes,facilitiesRoutes:facilities,sendingFacility:clean(f["facility.discharge.name"]),receivingFacility:clean(f["facility.receiving.name"]),route:routes.join("; "),durationMinutes:duration,facilityMinutes:facilityMinutes,pickupToHandoffMinutes:pickupToHandoff,legCount:itinerary.length,patientLegCount:patientLegs.length,facilityStopCount:stops.length,lineCount:lines.length,labCount:labs.length,communicationCount:communications.length,timelineCount:timeline.length,vitalCount:vitals.length,vitalObservations:vitalObservations,minSpo2:spo2.length?Math.min.apply(null,spo2):null,maxSpo2:spo2.length?Math.max.apply(null,spo2):null,minHr:hr.length?Math.min.apply(null,hr):null,maxHr:hr.length?Math.max.apply(null,hr):null,minMap:maps.length?Math.min.apply(null,maps):null,maxMap:maps.length?Math.max.apply(null,maps):null,minTemp:temps.length?Math.min.apply(null,temps):null,maxTemp:temps.length?Math.max.apply(null,temps):null,minGlucose:glucose.length?Math.min.apply(null,glucose):null,maxGlucose:glucose.length?Math.max.apply(null,glucose):null,spo2Change:change(pickupVital,arrivalVital,"spo2"),mapChange:change(pickupVital,arrivalVital,"map"),hrChange:change(pickupVital,arrivalVital,"hr"),deterioration:deterioration,delayDocumented:delayDocumented,temporaryAdmission:temporaryAdmission,intakeMl:intake,outputMl:output,completeness:completeness,completenessPercent:completenessPercent,searchText:search}
+}
+function makeStoredCase(data,name){if(!data||data.format!=="flight-clinical-chart"||!data.chart||typeof data.chart.fields!=="object")throw Error("Not a Flight Clinical Chart backup");var c=data.chart,f=c.fields,trip=clean(f["transport.trip_number"]),date=clean(f["transport.chart_date"]),token=clean(f["patient.identifier"]);if(!token)token=[f["patient.dob"],f["patient.last_name"],f["patient.first_name"]].map(clean).join("|");var key=trip&&date&&token.replace(/\|/g,"")?"case:"+lower(trip+"|"+date+"|"+token):clean(c.id)?"chart:"+clean(c.id):"file:"+lower(name)+":"+clean(data.exportedAt),sortTime=Date.parse(c.updatedAt||data.exportedAt||c.createdAt||0);return{dedupeKey:key,sourceName:name,sortTime:Number.isFinite(sortTime)?sortTime:0,importedAt:new Date().toISOString(),data:data}}
+function openDb(){return new Promise(function(resolve){if(!window.indexedDB){resolve(null);return}try{var q=indexedDB.open(DB_NAME,1);q.onupgradeneeded=function(){if(!q.result.objectStoreNames.contains(DB_STORE))q.result.createObjectStore(DB_STORE,{keyPath:"dedupeKey"})};q.onsuccess=function(){resolve(q.result)};q.onerror=function(){resolve(null)}}catch(error){resolve(null)}})}
+function dbAll(){return new Promise(function(resolve){if(!db){resolve([]);return}var q=db.transaction(DB_STORE,"readonly").objectStore(DB_STORE).getAll();q.onsuccess=function(){resolve(q.result||[])};q.onerror=function(){resolve([])}})}
+function dbPut(item){return new Promise(function(resolve,reject){if(!db){resolve();return}var q=db.transaction(DB_STORE,"readwrite").objectStore(DB_STORE).put(item);q.onsuccess=function(){resolve()};q.onerror=function(){reject(q.error)}})}
+function dbClear(){return new Promise(function(resolve,reject){if(!db){resolve();return}var q=db.transaction(DB_STORE,"readwrite").objectStore(DB_STORE).clear();q.onsuccess=function(){resolve()};q.onerror=function(){reject(q.error)}})}
+function setStatus(message,state){var e=$("#importStatus");e.textContent=message;e.className="import-status"+(state?" "+state:"")}
+async function importFiles(fileList){var files=Array.from(fileList||[]).filter(function(f){return/\.json$/i.test(f.name)});if(!files.length){setStatus("No JSON files were selected.","error");return}setStatus("Reading "+files.length+" file"+(files.length===1?"":"s")+"…","");var map=new Map(storedCases.map(function(x){return[x.dedupeKey,x]})),stats={read:files.length,added:0,updated:0,duplicates:0,invalid:0},bad=[];for(var i=0;i<files.length;i++){var file=files[i];try{var data=JSON.parse(await file.text()),item=makeStoredCase(data,file.name),existing=map.get(item.dedupeKey);if(!existing){map.set(item.dedupeKey,item);await dbPut(item);stats.added++}else if(item.sortTime>existing.sortTime){map.set(item.dedupeKey,item);await dbPut(item);stats.updated++}else stats.duplicates++}catch(error){stats.invalid++;if(bad.length<12)bad.push(file.name+": "+(error&&error.message?error.message:"Invalid JSON"))}if((i+1)%25===0)setStatus("Processed "+(i+1)+" of "+files.length+" files…","")}storedCases=Array.from(map.values());records=storedCases.map(normalizeCase);sessionImport=stats;importLog=bad;refreshOptions();applyFilters();var summary=stats.added+" added"+(stats.updated?", "+stats.updated+" updated":"")+(stats.duplicates?", "+stats.duplicates+" duplicate"+(stats.duplicates===1?"":"s")+" ignored":"")+(stats.invalid?", "+stats.invalid+" invalid":"")+".";setStatus(summary,stats.invalid?"error":"success")}
+function sortedUnique(values){return uniqueText(values).sort(function(a,b){return a.localeCompare(b,undefined,{sensitivity:"base"})})}
+function fillSelect(select,values,label){var old=select.value;select.innerHTML="<option value=\"\">"+esc(label)+"</option>"+sortedUnique(values).map(function(v){return"<option value=\""+esc(v)+"\">"+esc(v)+"</option>"}).join("");if(Array.from(select.options).some(function(o){return o.value===old}))select.value=old}
+function refreshOptions(){fillSelect($("#patientTypeFilter"),records.map(function(r){return r.patientType}),"All categories");fillSelect($("#clientFilter"),records.map(function(r){return r.client}),"All clients");fillSelect($("#clinicianFilter"),records.reduce(function(a,r){return a.concat(r.clinicians)},[]),"All clinicians");["A","B"].forEach(updateCohortValue)}
+function initializeDimensionControls(){var options=crosstabDimensions().map(function(k){return"<option value=\""+k+"\">"+esc(breakdownDefinitions[k].label)+"</option>"}).join("");$("#crosstabRows").innerHTML=options;$("#crosstabColumns").innerHTML=options;$("#crosstabRows").value="patientType";$("#crosstabColumns").value="ventilated";["A","B"].forEach(updateCohortValue)}
+function ageMatch(r,f){if(!f)return true;if(f==="unknown")return r.ageDays==null;if(r.ageDays==null)return false;if(f==="neonate")return r.ageDays<28;if(f==="infant")return r.underOne;if(f==="infant28")return r.ageDays>=28&&r.underOne;if(f==="child")return r.ageYears>=1&&r.ageYears<18;if(f==="adult")return r.ageYears>=18&&r.ageYears<65;if(f==="older")return r.ageYears>=65;return true}
+function airwayMatch(r,f){return!f||f==="intubated"&&r.intubated||f==="tracheostomy"&&r.tracheostomy||f==="other"&&!r.intubated&&!r.tracheostomy}
+function boolMatch(v,s){return!s||(s==="yes"?v:!v)}function conditionRows(){return $$(".condition-row")}
+function conditionResult(r,row){var key=row.querySelector(".condition-field").value,op=row.querySelector(".condition-operator").value,control=row.querySelector(".condition-value"),def=fieldDefinitions[key];if(!def||!op||!control)return true;var actual=def.get(r),expected=control.value;if(def.type==="boolean"){var wanted=expected==="yes";return op==="isNot"?Boolean(actual)!==wanted:Boolean(actual)===wanted}if(def.type==="number"){if(!isNum(actual))return false;if(op==="between"){var p=expected.split(/\s*(?:,|to|–|-)\s*/i).map(numeric).filter(isNum);return p.length>=2&&actual>=Math.min(p[0],p[1])&&actual<=Math.max(p[0],p[1])}var target=numeric(expected);if(!isNum(target))return true;return op==="eq"?actual===target:op==="gt"?actual>target:op==="gte"?actual>=target:op==="lt"?actual<target:actual<=target}if(def.type==="date"){var d=parseDate(actual);if(!d)return false;if(op==="between"){var dates=expected.split(/\s*(?:,|to|–)\s*/i).map(parseDate).filter(Boolean);return dates.length>=2&&d>=dates[0]&&d<=dates[1]}var td=parseDate(expected);if(!td)return true;return op==="on"?isoDate(d)===isoDate(td):op==="after"?d>=td:d<=td}var vals=(Array.isArray(actual)?actual:[actual]).map(lower),targetText=lower(expected);if(!targetText)return true;if(op==="equals")return vals.some(function(v){return v===targetText});if(op==="notContains")return vals.every(function(v){return v.indexOf(targetText)<0});return vals.some(function(v){return v.indexOf(targetText)>=0})}
+function recordMatchesCurrent(r,ignoreDate){var from=parseDate($("#dateFrom").value),to=parseDate($("#dateTo").value),patient=lower($("#patientTypeFilter").value),age=$("#ageBandFilter").value,airway=$("#airwayFilter").value,vent=$("#ventilatedFilter").value,low=$("#lowLevelFilter").value,rean=$("#reanimationFilter").value,client=lower($("#clientFilter").value),clinician=lower($("#clinicianFilter").value),search=lower($("#textFilter").value),rows=conditionRows(),mode=$("#conditionMode").value,mission=parseDate(r.missionDate);if(!ignoreDate&&(from&&(!mission||mission<from)||to&&(!mission||mission>to))||patient&&lower(r.patientType)!==patient||!ageMatch(r,age)||!airwayMatch(r,airway)||!boolMatch(r.ventilated,vent)||!boolMatch(r.lowLevel,low)||!boolMatch(r.reanimationCount>0,rean)||client&&lower(r.client)!==client||clinician&&!r.clinicians.some(function(n){return lower(n)===clinician})||search&&r.searchText.indexOf(search)<0)return false;if(rows.length){var results=rows.map(function(row){return conditionResult(r,row)});if(mode==="any"?!results.some(Boolean):!results.every(Boolean))return false}return true}
+function applyFilters(){filteredRecords=records.filter(function(r){return recordMatchesCurrent(r,false)});filteredRecords.sort(function(a,b){return(b.missionDate||"").localeCompare(a.missionDate||"")||a.tripNumber.localeCompare(b.tripNumber)});renderAll()}
+function operatorOptions(type){if(type==="boolean")return[["is","is"],["isNot","is not"]];if(type==="number")return[["eq","equals"],["gte","is at least"],["lte","is at most"],["gt","is greater than"],["lt","is less than"],["between","is between"]];if(type==="date")return[["on","is on"],["after","is on or after"],["before","is on or before"],["between","is between"]];return[["contains","contains"],["equals","equals"],["notContains","does not contain"]]}
+function renderConditionControls(row){var def=fieldDefinitions[row.querySelector(".condition-field").value],op=row.querySelector(".condition-operator");op.innerHTML=operatorOptions(def.type).map(function(x){return"<option value=\""+x[0]+"\">"+x[1]+"</option>"}).join("");var host=row.querySelector(".condition-value-host");if(def.type==="boolean")host.innerHTML="<span class=\"form-label\">Value<select class=\"form-select condition-value\"><option value=\"yes\">Yes</option><option value=\"no\">No</option></select></span>";else if(def.type==="number")host.innerHTML="<span class=\"form-label\">Value<input class=\"form-control condition-value\" type=\"text\" inputmode=\"decimal\" placeholder=\"Number; between: 1, 10\"></span>";else if(def.type==="date")host.innerHTML="<span class=\"form-label\">Value<input class=\"form-control condition-value\" type=\"text\" placeholder=\"YYYY-MM-DD; between: two dates\"></span>";else host.innerHTML="<span class=\"form-label\">Value<input class=\"form-control condition-value\" type=\"text\" placeholder=\"Text to match\"></span>"}
+function addCondition(){conditionSequence++;var empty=$(".condition-empty");if(empty)empty.remove();var row=document.createElement("div");row.className="condition-row";row.innerHTML="<label class=\"form-label\">Field<select class=\"form-select condition-field\">"+Object.keys(fieldDefinitions).map(function(k){return"<option value=\""+k+"\">"+esc(fieldDefinitions[k].label)+"</option>"}).join("")+"</select></label><label class=\"form-label\">Operator<select class=\"form-select condition-operator\"></select></label><span class=\"condition-value-host\"></span><button type=\"button\" class=\"btn btn-ghost remove-condition\">Remove</button>";$("#conditionList").appendChild(row);renderConditionControls(row)}
+function removeCondition(row){row.remove();if(!conditionRows().length)$("#conditionList").innerHTML="<div class=\"condition-empty\">No additional conditions.</div>";applyFilters()}
+function localIso(d){return d?d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"):""}
+function setPeriod(p){var now=new Date,y=now.getFullYear(),m=now.getMonth(),q=Math.floor(m/3)*3,a=null,b=null;if(p==="thisMonth"){a=new Date(y,m,1);b=new Date(y,m+1,0)}if(p==="lastMonth"){a=new Date(y,m-1,1);b=new Date(y,m,0)}if(p==="thisQuarter"){a=new Date(y,q,1);b=new Date(y,q+3,0)}if(p==="thisYear"){a=new Date(y,0,1);b=new Date(y,11,31)}if(p==="lastYear"){a=new Date(y-1,0,1);b=new Date(y-1,11,31)}if(p==="rolling12"){a=new Date(y,m-11,1);b=new Date(y,m+1,0)}$("#dateFrom").value=localIso(a);$("#dateTo").value=localIso(b);$$('[data-period]').forEach(function(x){x.classList.toggle("btn-primary",x.dataset.period===p)});applyFilters()}
+function resetFilters(){["#dateFrom","#dateTo","#patientTypeFilter","#ageBandFilter","#airwayFilter","#ventilatedFilter","#lowLevelFilter","#reanimationFilter","#clientFilter","#clinicianFilter","#textFilter"].forEach(function(id){$(id).value=""});$("#conditionMode").value="all";$("#conditionList").innerHTML="<div class=\"condition-empty\">No additional conditions.</div>";$$('[data-period]').forEach(function(x){x.classList.toggle("btn-primary",x.dataset.period==="all")});applyFilters()}
+function filterSnapshot(){return{dateFrom:$("#dateFrom").value,dateTo:$("#dateTo").value,patientType:$("#patientTypeFilter").value,ageBand:$("#ageBandFilter").value,airway:$("#airwayFilter").value,ventilated:$("#ventilatedFilter").value,lowLevel:$("#lowLevelFilter").value,reanimation:$("#reanimationFilter").value,client:$("#clientFilter").value,clinician:$("#clinicianFilter").value,text:$("#textFilter").value,conditionMode:$("#conditionMode").value,conditions:conditionRows().map(function(row){return{field:row.querySelector(".condition-field").value,operator:row.querySelector(".condition-operator").value,value:row.querySelector(".condition-value").value}})}}
+function applySnapshot(s){s=s||{};$("#dateFrom").value=s.dateFrom||"";$("#dateTo").value=s.dateTo||"";$("#patientTypeFilter").value=s.patientType||"";$("#ageBandFilter").value=s.ageBand||"";$("#airwayFilter").value=s.airway||"";$("#ventilatedFilter").value=s.ventilated||"";$("#lowLevelFilter").value=s.lowLevel||"";$("#reanimationFilter").value=s.reanimation||"";$("#clientFilter").value=s.client||"";$("#clinicianFilter").value=s.clinician||"";$("#textFilter").value=s.text||"";$("#conditionMode").value=s.conditionMode||"all";$("#conditionList").innerHTML="";(s.conditions||[]).forEach(function(c){addCondition();var row=conditionRows()[conditionRows().length-1],field=row.querySelector(".condition-field");field.value=c.field||"patientType";renderConditionControls(row);row.querySelector(".condition-operator").value=c.operator||row.querySelector(".condition-operator").value;row.querySelector(".condition-value").value=c.value||""});if(!conditionRows().length)$("#conditionList").innerHTML="<div class=\"condition-empty\">No additional conditions.</div>";$$('[data-period]').forEach(function(x){x.classList.remove("btn-primary")});applyFilters()}
+function saveSettings(){try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({savedQueries:savedQueries,savedReports:savedReports,suppressSmall:$("#suppressSmallGroups").checked,threshold:$("#suppressionThreshold").value}))}catch(error){setStatus("Settings could not be saved in this browser.","error")}}
+function loadSettings(){try{var data=JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}");savedQueries=Array.isArray(data.savedQueries)?data.savedQueries:[];savedReports=Array.isArray(data.savedReports)?data.savedReports:[];$("#suppressSmallGroups").checked=!!data.suppressSmall;if(data.threshold)$("#suppressionThreshold").value=data.threshold}catch(error){savedQueries=[];savedReports=[]}refreshSavedQueries();refreshSavedReports()}
+function refreshSavedQueries(){var select=$("#savedQuerySelect"),old=select.value;select.innerHTML='<option value="">Choose a saved question</option>'+savedQueries.map(function(q,i){return '<option value="'+i+'">'+esc(q.name)+'</option>'}).join("");if(select.options[+old+1])select.value=old}
+function refreshSavedReports(){var select=$("#reportPresetSelect");if(!select)return;var old=select.value;select.innerHTML='<option value="">Choose a saved setup</option>'+savedReports.map(function(q,i){return '<option value="'+i+'">'+esc(q.name)+'</option>'}).join("");if(select.options[+old+1])select.value=old}
+function saveReportSetup(){var name=clean(prompt("Name this report setup:"));if(!name)return;var existing=savedReports.findIndex(function(q){return lower(q.name)===lower(name)}),item={name:name,title:clean($("#reportTitle").value),period:$("#reportPeriod").value,comparePrevious:$("#reportComparePrevious").checked,savedAt:new Date().toISOString()};if(existing>=0){if(!confirm("Replace the saved report setup named “"+name+"”?"))return;savedReports[existing]=item}else savedReports.push(item);savedReports.sort(function(a,b){return a.name.localeCompare(b.name)});saveSettings();refreshSavedReports();$("#reportPresetSelect").value=String(savedReports.findIndex(function(q){return q===item}));setStatus("Saved report setup: "+name+".","success")}
+function loadReportSetup(){var index=Number($("#reportPresetSelect").value);if(!Number.isInteger(index)||!savedReports[index])return;var r=savedReports[index];$("#reportTitle").value=r.title||"Medevac Clinical & Operational KPI Report";if(r.period)$("#reportPeriod").value=r.period;$("#reportComparePrevious").checked=r.comparePrevious!==false;generateReport();setStatus("Loaded report setup: "+r.name+".","success")}
+function deleteReportSetup(){var index=Number($("#reportPresetSelect").value);if(!Number.isInteger(index)||!savedReports[index])return;if(!confirm("Delete the saved report setup “"+savedReports[index].name+"”?"))return;savedReports.splice(index,1);saveSettings();refreshSavedReports();setStatus("Saved report setup deleted.","success")}
+function saveCurrentQuery(){var name=clean(prompt("Name this KPI question:"));if(!name)return;var existing=savedQueries.findIndex(function(q){return lower(q.name)===lower(name)}),item={name:name,snapshot:filterSnapshot(),savedAt:new Date().toISOString()};if(existing>=0){if(!confirm("Replace the saved question named “"+name+"”?"))return;savedQueries[existing]=item}else savedQueries.push(item);savedQueries.sort(function(a,b){return a.name.localeCompare(b.name)});saveSettings();refreshSavedQueries();$("#savedQuerySelect").value=String(savedQueries.findIndex(function(q){return q===item}));setStatus("Saved KPI question: "+name+".","success")}
+function loadSavedQuery(){var index=Number($("#savedQuerySelect").value);if(!Number.isInteger(index)||!savedQueries[index])return;applySnapshot(savedQueries[index].snapshot);setStatus("Loaded KPI question: "+savedQueries[index].name+".","success")}
+function deleteSavedQuery(){var index=Number($("#savedQuerySelect").value);if(!Number.isInteger(index)||!savedQueries[index])return;if(!confirm("Delete the saved question “"+savedQueries[index].name+"”?"))return;savedQueries.splice(index,1);saveSettings();refreshSavedQueries();setStatus("Saved KPI question deleted.","success")}
+function applyQuickPreset(){var key=$("#quickPreset").value;if(!key)return;resetFilters();if(key==="pediatricIntubated"){$("#patientTypeFilter").value="Pediatric";$("#airwayFilter").value="intubated"}if(key==="infants")$("#ageBandFilter").value="infant";if(key==="lowLevelVented"){$("#lowLevelFilter").value="yes";$("#ventilatedFilter").value="yes"}if(key==="reanimations")$("#reanimationFilter").value="yes";if(key==="occurrences"){addCondition();var row=conditionRows()[0],field=row.querySelector(".condition-field");field.value="occurrence";renderConditionControls(row);row.querySelector(".condition-value").value="yes"}if(key==="vasoactive"){addCondition();var vr=conditionRows()[0],vf=vr.querySelector(".condition-field");vf.value="vasoactive";renderConditionControls(vr);vr.querySelector(".condition-value").value="yes"}applyFilters()}
+function pct(n,d){return d?100*n/d:0}function fmtPct(v){return v.toLocaleString(undefined,{maximumFractionDigits:v>0&&v<10?1:0})+"%"}function fmt(v,d){return!isNum(v)?"—":v.toLocaleString(undefined,{minimumFractionDigits:d||0,maximumFractionDigits:d==null?1:d})}
+function suppressionThreshold(){return Math.max(2,Math.min(20,Number($("#suppressionThreshold").value)||5))}function displayCount(n){return $("#suppressSmallGroups").checked&&n>0&&n<suppressionThreshold()?"<"+suppressionThreshold():n.toLocaleString()}
+function renderAll(){renderPool();renderMetrics();renderTrend();renderBreakdown();renderDashboardKpis();renderExplore();renderComparison();renderCrosstab();renderStatistics();renderVitalSigns();renderCases();renderQuality();renderQuestion()}
+function renderPool(){var n=records.length;$("#poolCount").textContent=n.toLocaleString()+" unique case"+(n===1?"":"s");$("#poolDetails").textContent=db?"stored in this browser profile":"loaded for this session";["#exportAggregateBtn","#exportDeidentifiedCsvBtn","#exportIdentifiableCsvBtn","#backupPoolBtn","#printBtn","#clearPoolBtn"].forEach(function(id){$(id).disabled=!n});$("#emptyPoolMessage").hidden=n>0;$("#resultSentence").textContent=n?filteredRecords.length.toLocaleString()+" of "+n.toLocaleString()+" unique cases match this question.":"Load cases to begin an analysis."}
+function renderMetrics(){var total=records.length,n=filteredRecords.length,intubated=filteredRecords.filter(function(r){return r.intubated}).length,vented=filteredRecords.filter(function(r){return r.ventilated}).length;$("#metricCases").textContent=n.toLocaleString();$("#metricCaseContext").textContent="of "+total.toLocaleString()+" total";$("#metricShare").textContent=fmtPct(pct(n,total));$("#metricIntubated").textContent=intubated.toLocaleString();$("#metricIntubatedPct").textContent=fmtPct(pct(intubated,n))+" of matches";$("#metricVented").textContent=vented.toLocaleString();$("#metricVentedPct").textContent=fmtPct(pct(vented,n))+" of matches"}
+function averageOf(list,get){var s=summarize(list.map(get));return s?s.mean:null}
+function topCounts(list,getter,multi){var map=new Map;list.forEach(function(r){var values=multi?(getter(r)||[]):[getter(r)];values.forEach(function(v){v=clean(v);if(v)map.set(v,(map.get(v)||0)+1)})});return Array.from(map.entries()).map(function(x){return{label:x[0],value:x[1]}}).sort(function(a,b){return b.value-a.value||a.label.localeCompare(b.label)}).slice(0,8)}
+function renderTopList(id,items){var body=$(id);body.innerHTML=items.length?items.map(function(x){return '<tr><th>'+esc(x.label)+'</th><td class="text-end">'+displayCount(x.value)+'</td></tr>'}).join(""):'<tr><td colspan="2" class="text-muted">No recorded values</td></tr>'}
+function renderDashboardKpis(){var list=filteredRecords,n=list.length,clinical=[
+ ["Pediatric cases",function(r){return lower(r.patientType)==="pediatric"}],["Neonatal cases",function(r){return lower(r.patientType)==="neonatal"}],["Infants under one year",function(r){return r.underOne}],["Intubated / ETT",function(r){return r.intubated}],["Mechanically ventilated",function(r){return r.ventilated}],["Vasoactive medication involved",function(r){return r.vasoactive}],["Low-level flights",function(r){return r.lowLevel}],["Reanimation episodes recorded",function(r){return r.reanimationCount>0}],["Documented deterioration",function(r){return r.deterioration}],["Complications documented",function(r){return r.complication}],["Occurrences reported",function(r){return r.occurrence}]
+ ];$("#clinicalKpiBody").innerHTML=clinical.map(function(x){var count=list.filter(x[1]).length;return '<tr><th>'+esc(x[0])+'</th><td class="text-end">'+displayCount(count)+'</td><td class="text-end">'+fmtPct(pct(count,n))+'</td></tr>'}).join("");
+ var delayCount=list.filter(function(r){return r.delayDocumented}).length,tempCount=list.filter(function(r){return r.temporaryAdmission}).length,operational=[
+ ["Patient flight duration",fmt(averageOf(list,function(r){return r.durationMinutes}),1),"mean minutes"],["Facility time",fmt(averageOf(list,function(r){return r.facilityMinutes}),1),"mean minutes"],["Pickup-to-handoff time",fmt(averageOf(list,function(r){return r.pickupToHandoffMinutes}),1),"mean minutes"],["Flight legs",fmt(averageOf(list,function(r){return r.legCount}),1),"mean per case"],["Facility stops",fmt(averageOf(list,function(r){return r.facilityStopCount}),1),"mean per case"],["Lines / tubes / drains",fmt(averageOf(list,function(r){return r.lineCount}),1),"mean per case"],["Continuous infusions",fmt(averageOf(list,function(r){return r.infusionCount}),1),"mean per case"],["Medication administrations",fmt(averageOf(list,function(r){return r.medicationAdministrationCount}),1),"mean per case"],["Vital-sign observations",fmt(averageOf(list,function(r){return r.vitalCount}),1),"mean per case"],["Laboratory results",fmt(averageOf(list,function(r){return r.labCount}),1),"mean per case"],["Communications",fmt(averageOf(list,function(r){return r.communicationCount}),1),"mean per case"],["Documented delays",displayCount(delayCount)+" ("+fmtPct(pct(delayCount,n))+")","cases / rate"],["Temporary facility admissions",displayCount(tempCount)+" ("+fmtPct(pct(tempCount,n))+")","explicitly documented"],["Pickup-to-arrival SpO₂ change",fmt(averageOf(list,function(r){return r.spo2Change}),1),"mean percentage points"]
+ ];$("#operationalKpiBody").innerHTML=operational.map(function(x){return '<tr><th>'+esc(x[0])+'</th><td class="text-end">'+x[1]+'</td><td>'+esc(x[2])+'</td></tr>'}).join("");
+ renderTopList("#topMedicationsBody",topCounts(list,function(r){return r.medications},true));renderTopList("#topClientsBody",topCounts(list,function(r){return r.client},false));renderTopList("#topDiagnosesBody",topCounts(list,function(r){return r.primaryDiagnosis},false))}
+function trendBuckets(list,interval){var map=new Map;list.forEach(function(r){var d=parseDate(r.missionDate);if(!d)return;var k=interval==="year"?String(d.getUTCFullYear()):r.missionDate.slice(0,7);map.set(k,(map.get(k)||0)+1)});var keys=Array.from(map.keys()).sort();if(keys.length&&interval==="month"){var start=parseDate(keys[0]+"-01"),end=parseDate(keys[keys.length-1]+"-01"),expanded=[],cursor=new Date(start.getTime());while(cursor<=end&&expanded.length<240){expanded.push(cursor.toISOString().slice(0,7));cursor.setUTCMonth(cursor.getUTCMonth()+1)}keys=expanded}return keys.map(function(k){return{key:k,value:map.get(k)||0}})}
+function renderTrend(){var interval=$("#trendInterval").value,points=trendBuckets(filteredRecords,interval),box=$("#trendChart");if(!points.length){box.innerHTML="<div class=\"chart-empty\">No matching cases with a valid mission date.</div>";$("#trendNote").textContent="";return}var width=900,height=300,left=58,right=22,top=28,bottom=58,pw=width-left-right,ph=height-top-bottom,max=Math.max.apply(null,points.map(function(p){return p.value}).concat([1])),coords=points.map(function(p,i){return{x:points.length===1?left+pw/2:left+i*pw/(points.length-1),y:top+ph-p.value/max*ph,point:p}}),ticks=[];for(var t=0;t<=4;t++){var tv=Math.round(max*t/4),y=top+ph-tv/max*ph;ticks.push("<line x1=\""+left+"\" x2=\""+(width-right)+"\" y1=\""+y+"\" y2=\""+y+"\" stroke=\"var(--border)\"/><text x=\""+(left-10)+"\" y=\""+(y+4)+"\" text-anchor=\"end\" fill=\"currentColor\" font-size=\"12\">"+tv+"</text>")}var every=Math.max(1,Math.ceil(points.length/8)),labels=coords.map(function(c,i){return i%every!==0&&i!==coords.length-1?"":"<text x=\""+c.x+"\" y=\""+(height-24)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+esc(c.point.key)+"</text>"}).join(""),path=coords.map(function(c,i){return(i?"L":"M")+c.x.toFixed(1)+" "+c.y.toFixed(1)}).join(" "),dots=coords.map(function(c){return"<circle cx=\""+c.x+"\" cy=\""+c.y+"\" r=\"5\" fill=\"var(--viz-series-1)\"><title>"+esc(c.point.key)+": "+c.point.value+" cases</title></circle><text x=\""+c.x+"\" y=\""+(c.y-10)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+c.point.value+"</text>"}).join("");box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Matching cases by "+interval+"\"><title>Mission trend</title><desc>Unique matching cases grouped by "+interval+".</desc>"+ticks.join("")+"<line x1=\""+left+"\" x2=\""+left+"\" y1=\""+top+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/><path d=\""+path+"\" fill=\"none\" stroke=\"var(--viz-series-1)\" stroke-width=\"3\"/>"+dots+labels+"</svg>";$("#trendNote").textContent=points.length+" "+interval+(points.length===1?"":"s")+" displayed; months without cases are shown as zero."}
+function groupCounts(list,key){var def=breakdownDefinitions[key]||breakdownDefinitions.patientType,map=new Map;list.forEach(function(r){uniqueText(def.values(r)).forEach(function(v){map.set(v,(map.get(v)||0)+1)})});var entries=Array.from(map.entries()).map(function(e){return{label:e[0],value:e[1]}}).sort(function(a,b){return b.value-a.value||a.label.localeCompare(b.label)});if(entries.length>12){var keep=entries.slice(0,11);keep.push({label:"Other",value:entries.slice(11).reduce(function(s,x){return s+x.value},0)});entries=keep}return{definition:def,entries:entries}}
+function series(i){return"var(--viz-series-"+(i%6+1)+")"}
+function renderBreakdown(){var key=$("#breakdownGroup").value,type=$("#breakdownType").value,g=groupCounts(filteredRecords,key),entries=g.entries,box=$("#breakdownChart");$("#breakdownSubtitle").textContent="Distribution by "+g.definition.label.toLocaleLowerCase()+".";if(!entries.length){box.innerHTML="<div class=\"chart-empty\">No matching cases to display.</div>";$("#breakdownNote").textContent="";return}if(type==="donut")renderDonut(box,entries,g.definition.label);else renderBars(box,entries,g.definition.label);$("#breakdownNote").textContent=g.definition.multi?"A case can appear in more than one category; totals may exceed matching cases.":"Each matching case contributes to one category."}
+function renderBars(box,entries,label){var width=720,rowH=34,top=16,labelW=230,valueW=46,plotW=width-labelW-valueW-20,height=top+16+entries.length*rowH,max=Math.max.apply(null,entries.map(function(e){return e.value}).concat([1])),rows=entries.map(function(e,i){var y=top+i*rowH,bw=Math.max(2,e.value/max*plotW),short=e.label.length>30?e.label.slice(0,29)+"…":e.label;return"<text x=\""+(labelW-10)+"\" y=\""+(y+21)+"\" text-anchor=\"end\" fill=\"currentColor\" font-size=\"12\"><title>"+esc(e.label)+"</title>"+esc(short)+"</text><rect x=\""+labelW+"\" y=\""+(y+5)+"\" width=\""+bw+"\" height=\"21\" rx=\"3\" fill=\"var(--viz-series-1)\"><title>"+esc(e.label)+": "+e.value+"</title></rect><text x=\""+(labelW+bw+7)+"\" y=\""+(y+21)+"\" fill=\"currentColor\" font-size=\"12\">"+e.value+"</text>"}).join("");box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Matching cases by "+esc(label)+"\"><title>Case breakdown by "+esc(label)+"</title><desc>Horizontal bars show unique case counts.</desc>"+rows+"</svg>"}
+function renderDonut(box,entries,label){var total=entries.reduce(function(s,e){return s+e.value},0),radius=74,circ=2*Math.PI*radius,offset=0,segments=entries.map(function(e,i){var len=total?e.value/total*circ:0,m="<circle cx=\"100\" cy=\"100\" r=\""+radius+"\" fill=\"none\" stroke=\""+series(i)+"\" stroke-width=\"30\" stroke-dasharray=\""+len+" "+(circ-len)+"\" stroke-dashoffset=\""+(-offset)+"\" transform=\"rotate(-90 100 100)\"><title>"+esc(e.label)+": "+e.value+"</title></circle>";offset+=len;return m}).join(""),legend=entries.map(function(e,i){return"<li><span class=\"legend-swatch\" style=\"background:"+series(i)+"\"></span><span>"+esc(e.label)+"</span><strong>"+e.value+"</strong></li>"}).join("");box.innerHTML="<div class=\"donut-layout\"><svg viewBox=\"0 0 200 200\" role=\"img\" aria-label=\"Matching cases by "+esc(label)+"\"><title>Case breakdown by "+esc(label)+"</title><desc>Donut chart of matching case counts.</desc>"+segments+"<circle cx=\"100\" cy=\"100\" r=\"51\" fill=\"var(--background)\"/><text x=\"100\" y=\"98\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"25\" font-weight=\"500\">"+total+"</text><text x=\"100\" y=\"118\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">case counts</text></svg><ul class=\"legend text-small\">"+legend+"</ul></div>"}
+function categoryValues(r,key){var def=breakdownDefinitions[key]||breakdownDefinitions.patientType;return uniqueText(def.values(r))}
+function allCategoryNames(list,key){var map=new Map;list.forEach(function(r){categoryValues(r,key).forEach(function(v){map.set(v,(map.get(v)||0)+1)})});return Array.from(map.entries()).sort(function(a,b){return b[1]-a[1]||a[0].localeCompare(b[0])}).map(function(x){return x[0]})}
+function renderExplore(){var type=$("#exploreChartType").value,box=$("#exploreChart"),note="";if(!filteredRecords.length){box.innerHTML="<div class=\"chart-empty\">No matching cases to explore.</div>";$("#exploreNote").textContent="";return}if(type==="stacked"){renderStackedChart(box);note="Monthly case volume is stacked by the selected category."}else if(type==="histogram"){renderHistogram(box);note="The distribution uses equal-width bins across recorded values."}else if(type==="heatmap"){renderMissionHeatmap(box);note="Rows are days of the week and columns are calendar months."}else if(type==="scatter"){renderScatter(box);note="Each point represents one case with both measures recorded."}else{renderBoxPlot(box);note="Boxes show Q1–Q3, the median, and recorded range for each category."}$("#exploreNote").textContent=note}
+function renderStackedChart(box){var key=$("#exploreCategory").value,def=breakdownDefinitions[key]||breakdownDefinitions.patientType,months=trendBuckets(filteredRecords,"month").map(function(x){return x.key}),categoryTotals=groupCounts(filteredRecords,key).entries.slice(0,6),categories=categoryTotals.map(function(x){return x.label}),data=months.map(function(month){var row={month:month,values:{}};categories.forEach(function(c){row.values[c]=0});filteredRecords.filter(function(r){return r.missionDate.slice(0,7)===month}).forEach(function(r){categoryValues(r,key).forEach(function(c){if(row.values[c]!=null)row.values[c]++})});return row}),width=920,height=360,left=58,right=25,top=25,bottom=70,pw=width-left-right,ph=height-top-bottom,max=Math.max.apply(null,data.map(function(row){return categories.reduce(function(s,c){return s+row.values[c]},0)}).concat([1])),barW=Math.max(5,Math.min(55,pw/Math.max(1,data.length)*.72)),marks="",every=Math.max(1,Math.ceil(data.length/9));data.forEach(function(row,i){var x=left+(i+.5)*pw/data.length,y=top+ph;categories.forEach(function(c,j){var h=row.values[c]/max*ph;y-=h;marks+="<rect x=\""+(x-barW/2)+"\" y=\""+y+"\" width=\""+barW+"\" height=\""+Math.max(0,h)+"\" fill=\""+series(j)+"\"><title>"+esc(row.month+" — "+c+": "+row.values[c])+"</title></rect>"});if(i%every===0||i===data.length-1)marks+="<text x=\""+x+"\" y=\""+(height-42)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"11\">"+esc(row.month)+"</text>"});var legend=categories.map(function(c,i){return"<g transform=\"translate("+(left+i%3*260)+","+(height-19+Math.floor(i/3)*17)+")\"><rect width=\"10\" height=\"10\" fill=\""+series(i)+"\"/><text x=\"15\" y=\"10\" fill=\"currentColor\" font-size=\"11\">"+esc(c.slice(0,30))+"</text></g>"}).join("");box.innerHTML="<svg viewBox=\"0 0 "+width+" "+(height+25)+"\" role=\"img\" aria-label=\"Stacked monthly cases by "+esc(def.label)+"\"><title>Stacked mission trend</title><desc>Monthly matching cases stacked by "+esc(def.label)+".</desc><line x1=\""+left+"\" x2=\""+left+"\" y1=\""+top+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/><line x1=\""+left+"\" x2=\""+(width-right)+"\" y1=\""+(top+ph)+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/>"+marks+legend+"</svg>"}
+function renderHistogram(box){var key=$("#exploreMeasure").value,def=numericMeasures[key]||numericMeasures.ageExactYears,values=filteredRecords.map(def.get).filter(isNum);if(!values.length){box.innerHTML="<div class=\"chart-empty\">No recorded values for "+esc(def.label)+".</div>";return}var min=Math.min.apply(null,values),max=Math.max.apply(null,values),binsCount=Math.min(12,Math.max(4,Math.ceil(Math.sqrt(values.length)))),span=max-min||1,bins=Array.from({length:binsCount},function(_,i){return{low:min+i*span/binsCount,high:min+(i+1)*span/binsCount,count:0}});values.forEach(function(v){var i=Math.min(binsCount-1,Math.floor((v-min)/span*binsCount));bins[i].count++});var width=880,height=340,left=60,right=20,top=25,bottom=65,pw=width-left-right,ph=height-top-bottom,high=Math.max.apply(null,bins.map(function(b){return b.count}).concat([1])),gap=5,barW=pw/binsCount-gap,marks=bins.map(function(b,i){var h=b.count/high*ph,x=left+i*pw/binsCount,y=top+ph-h;return"<rect x=\""+x+"\" y=\""+y+"\" width=\""+barW+"\" height=\""+h+"\" fill=\"var(--viz-series-1)\"><title>"+fmt(b.low,1)+"–"+fmt(b.high,1)+": "+b.count+" cases</title></rect><text x=\""+(x+barW/2)+"\" y=\""+(y-6)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"11\">"+b.count+"</text><text x=\""+(x+barW/2)+"\" y=\""+(height-35)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">"+fmt(b.low,1)+"</text>"}).join("");box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Histogram of "+esc(def.label)+"\"><title>Distribution of "+esc(def.label)+"</title><desc>Histogram of recorded case-level values.</desc><line x1=\""+left+"\" x2=\""+(width-right)+"\" y1=\""+(top+ph)+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/>"+marks+"<text x=\""+(width/2)+"\" y=\""+(height-7)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+esc(def.label)+"</text></svg>"}
+function renderMissionHeatmap(box){var valid=filteredRecords.map(function(r){return parseDate(r.missionDate)}).filter(Boolean);if(!valid.length){box.innerHTML="<div class=\"chart-empty\">No valid mission dates.</div>";return}var weekdays=["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],counts={},max=1;valid.forEach(function(d){var day=(d.getUTCDay()+6)%7,k=day+"-"+d.getUTCMonth();counts[k]=(counts[k]||0)+1;max=Math.max(max,counts[k])});var width=920,left=105,top=42,cellW=63,cellH=38,height=top+weekdays.length*cellH+30,marks=months.map(function(m,i){return"<text x=\""+(left+i*cellW+cellW/2)+"\" y=\"25\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"11\">"+m+"</text>"}).join("");weekdays.forEach(function(day,ri){marks+="<text x=\""+(left-12)+"\" y=\""+(top+ri*cellH+24)+"\" text-anchor=\"end\" fill=\"currentColor\" font-size=\"12\">"+day+"</text>";months.forEach(function(month,mi){var n=counts[ri+"-"+mi]||0,opacity=n?(.18+.72*n/max):.03;marks+="<rect x=\""+(left+mi*cellW)+"\" y=\""+(top+ri*cellH)+"\" width=\""+(cellW-4)+"\" height=\""+(cellH-4)+"\" rx=\"3\" fill=\"var(--viz-series-1)\" opacity=\""+opacity+"\"><title>"+day+", "+month+": "+n+" cases</title></rect><text x=\""+(left+mi*cellW+(cellW-4)/2)+"\" y=\""+(top+ri*cellH+23)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"11\">"+n+"</text>"})});box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Mission volume heatmap by weekday and month\"><title>Mission heatmap</title><desc>Matching mission counts by day of the week and calendar month.</desc>"+marks+"</svg>"}
+function renderScatter(box){var xKey=$("#exploreMeasure").value,yKey=$("#exploreMeasureY").value,xDef=numericMeasures[xKey]||numericMeasures.ageExactYears,yDef=numericMeasures[yKey]||numericMeasures.minSpo2,points=filteredRecords.map(function(r){return{x:xDef.get(r),y:yDef.get(r),trip:r.tripNumber}}).filter(function(p){return isNum(p.x)&&isNum(p.y)}).slice(0,500);if(!points.length){box.innerHTML="<div class=\"chart-empty\">No cases have both selected measures.</div>";return}var width=900,height=380,left=75,right=25,top=25,bottom=65,pw=width-left-right,ph=height-top-bottom,xMin=Math.min.apply(null,points.map(function(p){return p.x})),xMax=Math.max.apply(null,points.map(function(p){return p.x})),yMin=Math.min.apply(null,points.map(function(p){return p.y})),yMax=Math.max.apply(null,points.map(function(p){return p.y}));if(xMax===xMin)xMax=xMin+1;if(yMax===yMin)yMax=yMin+1;var marks=points.map(function(p){var x=left+(p.x-xMin)/(xMax-xMin)*pw,y=top+ph-(p.y-yMin)/(yMax-yMin)*ph;return"<circle cx=\""+x+"\" cy=\""+y+"\" r=\"5\" fill=\"var(--viz-series-1)\" opacity=\".72\"><title>"+esc((p.trip||"Case")+" — "+xDef.label+": "+fmt(p.x,1)+"; "+yDef.label+": "+fmt(p.y,1))+"</title></circle>"}).join("");box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Scatter plot of "+esc(xDef.label)+" and "+esc(yDef.label)+"\"><title>Case-level scatter plot</title><desc>Each dot is a matching case.</desc><line x1=\""+left+"\" x2=\""+left+"\" y1=\""+top+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/><line x1=\""+left+"\" x2=\""+(left+pw)+"\" y1=\""+(top+ph)+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/>"+marks+"<text x=\""+(width/2)+"\" y=\""+(height-10)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+esc(xDef.label)+"</text><text x=\"18\" y=\""+(height/2)+"\" transform=\"rotate(-90 18 "+(height/2)+")\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+esc(yDef.label)+"</text><text x=\""+left+"\" y=\""+(top+ph+18)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">"+fmt(xMin,1)+"</text><text x=\""+(left+pw)+"\" y=\""+(top+ph+18)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">"+fmt(xMax,1)+"</text></svg>"}
+function renderBoxPlot(box){var key=$("#exploreCategory").value,measureKey=$("#exploreMeasure").value,def=numericMeasures[measureKey]||numericMeasures.ageExactYears,groups=new Map;filteredRecords.forEach(function(r){var value=def.get(r);if(!isNum(value))return;categoryValues(r,key).forEach(function(c){if(!groups.has(c))groups.set(c,[]);groups.get(c).push(value)})});var entries=Array.from(groups.entries()).map(function(e){return{label:e[0],values:e[1],stats:summarize(e[1])}}).sort(function(a,b){return b.values.length-a.values.length}).slice(0,8);if(!entries.length){box.innerHTML="<div class=\"chart-empty\">No recorded values for the selected measure.</div>";return}var min=Math.min.apply(null,entries.map(function(e){return e.stats.min})),max=Math.max.apply(null,entries.map(function(e){return e.stats.max}));if(max===min)max=min+1;var width=900,height=370,left=75,right=25,top=25,bottom=90,pw=width-left-right,ph=height-top-bottom,marks="",slot=pw/entries.length;entries.forEach(function(e,i){var x=left+(i+.5)*slot,scale=function(v){return top+ph-(v-min)/(max-min)*ph},boxTop=scale(e.stats.q3),boxBottom=scale(e.stats.q1),median=scale(e.stats.median),whiskerTop=scale(e.stats.max),whiskerBottom=scale(e.stats.min),bw=Math.min(54,slot*.55),short=e.label.length>16?e.label.slice(0,15)+"…":e.label;marks+="<line x1=\""+x+"\" x2=\""+x+"\" y1=\""+whiskerTop+"\" y2=\""+whiskerBottom+"\" stroke=\"var(--viz-series-1)\"/><rect x=\""+(x-bw/2)+"\" y=\""+boxTop+"\" width=\""+bw+"\" height=\""+Math.max(2,boxBottom-boxTop)+"\" fill=\"var(--viz-series-1)\" opacity=\".25\" stroke=\"var(--viz-series-1)\"><title>"+esc(e.label+" — n="+e.stats.n+", median "+fmt(e.stats.median,1)+", Q1–Q3 "+fmt(e.stats.q1,1)+"–"+fmt(e.stats.q3,1))+"</title></rect><line x1=\""+(x-bw/2)+"\" x2=\""+(x+bw/2)+"\" y1=\""+median+"\" y2=\""+median+"\" stroke=\"var(--viz-series-1)\" stroke-width=\"3\"/><text x=\""+x+"\" y=\""+(height-48)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\"><title>"+esc(e.label)+"</title>"+esc(short)+"</text><text x=\""+x+"\" y=\""+(height-32)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">n="+e.stats.n+"</text>"});box.innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Box plot of "+esc(def.label)+" by category\"><title>Box plot</title><desc>Case-level distribution of "+esc(def.label)+" across categories.</desc><line x1=\""+left+"\" x2=\""+left+"\" y1=\""+top+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/>"+marks+"<text x=\"18\" y=\""+(height/2)+"\" transform=\"rotate(-90 18 "+(height/2)+")\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"12\">"+esc(def.label)+"</text></svg>"}
+function cohortOptions(criterion){if(criterion==="patientType")return sortedUnique(records.map(function(r){return r.patientType}));if(criterion==="client")return sortedUnique(records.map(function(r){return r.client}));if(criterion==="aircraft")return sortedUnique(records.map(function(r){return r.aircraft}));if(["ventilated","intubated","lowLevel","reanimation","complication","occurrence","vasoactive","deterioration","delayDocumented"].indexOf(criterion)>=0)return["Yes","No"];return["All"]}
+function updateCohortValue(prefix){var criterion=$("#cohort"+prefix+"Criterion").value,select=$("#cohort"+prefix+"Value"),old=select.value,values=cohortOptions(criterion);select.innerHTML=values.map(function(v){return '<option value="'+esc(v)+'">'+esc(v)+'</option>'}).join("");if(values.indexOf(old)>=0)select.value=old;select.disabled=criterion==="all"}
+function cohortList(prefix){var criterion=$("#cohort"+prefix+"Criterion").value,value=$("#cohort"+prefix+"Value").value,from=parseDate($("#cohort"+prefix+"From").value),to=parseDate($("#cohort"+prefix+"To").value),base=records.filter(function(r){return recordMatchesCurrent(r,true)});return base.filter(function(r){var d=parseDate(r.missionDate);if(from&&(!d||d<from)||to&&(!d||d>to))return false;if(criterion==="all")return true;if(criterion==="patientType")return lower(r.patientType)===lower(value);if(criterion==="client")return lower(r.client)===lower(value);if(criterion==="aircraft")return lower(r.aircraft)===lower(value);var expected=value==="Yes";if(criterion==="ventilated")return r.ventilated===expected;if(criterion==="intubated")return r.intubated===expected;if(criterion==="lowLevel")return r.lowLevel===expected;if(criterion==="reanimation")return(r.reanimationCount>0)===expected;if(criterion==="complication")return r.complication===expected;if(criterion==="occurrence")return r.occurrence===expected;if(criterion==="vasoactive")return r.vasoactive===expected;if(criterion==="deterioration")return r.deterioration===expected;if(criterion==="delayDocumented")return r.delayDocumented===expected;return true})}
+function comparisonMetrics(list){var n=list.length;return[{label:"Cases",value:n,kind:"count"},{label:"Intubated",value:pct(list.filter(function(r){return r.intubated}).length,n),kind:"pct"},{label:"Ventilated",value:pct(list.filter(function(r){return r.ventilated}).length,n),kind:"pct"},{label:"Low-level",value:pct(list.filter(function(r){return r.lowLevel}).length,n),kind:"pct"},{label:"Reanimation",value:pct(list.filter(function(r){return r.reanimationCount>0}).length,n),kind:"pct"},{label:"Documented deterioration",value:pct(list.filter(function(r){return r.deterioration}).length,n),kind:"pct"},{label:"Complication",value:pct(list.filter(function(r){return r.complication}).length,n),kind:"pct"},{label:"Occurrence",value:pct(list.filter(function(r){return r.occurrence}).length,n),kind:"pct"},{label:"Documented delay",value:pct(list.filter(function(r){return r.delayDocumented}).length,n),kind:"pct"},{label:"Mean age",value:averageOf(list,function(r){return r.ageExactYears}),kind:"number"},{label:"Mean flight minutes",value:averageOf(list,function(r){return r.durationMinutes}),kind:"number"},{label:"Mean medication administrations",value:averageOf(list,function(r){return r.medicationAdministrationCount}),kind:"number"},{label:"Mean continuous infusions",value:averageOf(list,function(r){return r.infusionCount}),kind:"number"}]}
+function renderComparison(){var a=cohortList("A"),b=cohortList("B"),labelA=clean($("#cohortALabel").value)||"Cohort A",labelB=clean($("#cohortBLabel").value)||"Cohort B",ma=comparisonMetrics(a),mb=comparisonMetrics(b);$("#comparisonHead").innerHTML="<tr><th>Indicator</th><th class=\"text-end\">"+esc(labelA)+"</th><th class=\"text-end\">"+esc(labelB)+"</th><th class=\"text-end\">Difference</th></tr>";$("#comparisonBody").innerHTML=ma.map(function(m,i){var other=mb[i],diff=isNum(m.value)&&isNum(other.value)?m.value-other.value:null,format=m.kind==="pct"?function(v){return fmtPct(v)}:m.kind==="count"?function(v){return displayCount(v)}:function(v){return fmt(v,1)},cls=isNum(diff)?diff>0?"comparison-positive":diff<0?"comparison-negative":"":"";return"<tr><th>"+esc(m.label)+"</th><td class=\"text-end\">"+format(m.value)+"</td><td class=\"text-end\">"+format(other.value)+"</td><td class=\"text-end "+cls+"\">"+(isNum(diff)?(diff>0?"+":"")+(m.kind==="pct"?fmt(diff,1)+" pp":fmt(diff,1)):"—")+"</td></tr>"}).join("");var rates=ma.map(function(m,i){return{label:m.label,a:m.value,b:mb[i].value,kind:m.kind}}).filter(function(m){return m.kind==="pct"}),width=720,height=300,left=150,right=30,top=20,bottom=35,pw=width-left-right,rowH=(height-top-bottom)/rates.length,marks=rates.map(function(m,i){var y=top+i*rowH,bwA=Math.max(0,m.a/100*pw),bwB=Math.max(0,m.b/100*pw);return"<text x=\""+(left-8)+"\" y=\""+(y+18)+"\" text-anchor=\"end\" fill=\"currentColor\" font-size=\"11\">"+esc(m.label)+"</text><rect x=\""+left+"\" y=\""+(y+3)+"\" width=\""+bwA+"\" height=\"9\" fill=\"var(--viz-series-1)\"><title>"+esc(labelA+": "+fmtPct(m.a))+"</title></rect><rect x=\""+left+"\" y=\""+(y+15)+"\" width=\""+bwB+"\" height=\"9\" fill=\"var(--viz-series-2)\"><title>"+esc(labelB+": "+fmtPct(m.b))+"</title></rect>"}).join("");$("#comparisonChart").innerHTML="<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Comparison of cohort rates\"><title>Cohort comparison</title><desc>Clinical and operational rates for two selected cohorts.</desc>"+marks+"<g transform=\"translate("+left+","+(height-10)+")\"><rect width=\"10\" height=\"10\" fill=\"var(--viz-series-1)\"/><text x=\"15\" y=\"10\" fill=\"currentColor\" font-size=\"11\">"+esc(labelA)+"</text><rect x=\"180\" width=\"10\" height=\"10\" fill=\"var(--viz-series-2)\"/><text x=\"195\" y=\"10\" fill=\"currentColor\" font-size=\"11\">"+esc(labelB)+"</text></g></svg>"}
+function setPreviousComparisonPeriod(){var from=parseDate($("#dateFrom").value),to=parseDate($("#dateTo").value);if(!from||!to){var now=new Date,y=now.getFullYear();from=new Date(Date.UTC(y,0,1));to=new Date(Date.UTC(y,11,31))}var days=Math.floor((to-from)/864e5)+1,prevTo=new Date(from.getTime()-864e5),prevFrom=new Date(prevTo.getTime()-(days-1)*864e5);$("#cohortAFrom").value=isoDate(from);$("#cohortATo").value=isoDate(to);$("#cohortBFrom").value=isoDate(prevFrom);$("#cohortBTo").value=isoDate(prevTo);$("#cohortALabel").value="Current period";$("#cohortBLabel").value="Previous period";renderComparison()}
+function crosstabDimensions(){return["patientType","ageBand","client","sex","airway","ventilated","lowLevel","reanimation","complication","occurrence","deterioration","delayDocumented","temporaryAdmission","occurrencePhases","category","clinicians","medications","lineTypes","sendingFacility","receivingFacility","aircraft","ventMode","primaryDiagnosis","route"]}
+function renderCrosstab(){var rowKey=$("#crosstabRows").value||"patientType",colKey=$("#crosstabColumns").value||"ventilated",mode=$("#crosstabDisplay").value,rowDef=breakdownDefinitions[rowKey],colDef=breakdownDefinitions[colKey],rowNames=allCategoryNames(filteredRecords,rowKey).slice(0,20),colNames=allCategoryNames(filteredRecords,colKey).slice(0,20),matrix={},grand=0,max=1;rowNames.forEach(function(r){matrix[r]={};colNames.forEach(function(c){matrix[r][c]=0})});filteredRecords.forEach(function(record){var rows=categoryValues(record,rowKey),cols=categoryValues(record,colKey);rows.forEach(function(r){cols.forEach(function(c){if(matrix[r]&&matrix[r][c]!=null){matrix[r][c]++;grand++;max=Math.max(max,matrix[r][c])}})})});var head="<thead><tr><th>"+esc(rowDef.label)+" / "+esc(colDef.label)+"</th>"+colNames.map(function(c){return"<th>"+esc(c)+"</th>"}).join("")+"<th>Total</th></tr></thead>",body="<tbody>";rowNames.forEach(function(r){var rowTotal=colNames.reduce(function(s,c){return s+matrix[r][c]},0);body+="<tr><th>"+esc(r)+"</th>"+colNames.map(function(c){var n=matrix[r][c],value=mode==="rowPct"?fmtPct(pct(n,rowTotal)):mode==="totalPct"?fmtPct(pct(n,grand)):displayCount(n),heat=Math.round(n/max*65);return"<td class=\"heat-cell\" style=\"--heat:"+heat+"%\">"+value+"</td>"}).join("")+"<td><strong>"+(mode==="count"?displayCount(rowTotal):mode==="rowPct"?"100%":fmtPct(pct(rowTotal,grand)))+"</strong></td></tr>"});body+="</tbody>";$("#crosstabTable").innerHTML=head+body;$("#crosstabSummary").textContent=filteredRecords.length.toLocaleString()+" matching cases cross-tabulated by "+rowDef.label.toLocaleLowerCase()+" and "+colDef.label.toLocaleLowerCase()+".";$("#crosstabNote").textContent=rowDef.multi||colDef.multi?"A case can contribute to more than one cell because at least one selected dimension is multi-valued.":"Each case contributes to one cell.";lastCrosstab={rowKey:rowKey,colKey:colKey,rowNames:rowNames,colNames:colNames,matrix:matrix}}
+function exportCrosstab(){if(!lastCrosstab)return;var rowDef=breakdownDefinitions[lastCrosstab.rowKey],rows=[[rowDef.label].concat(lastCrosstab.colNames).concat(["Total"])];lastCrosstab.rowNames.forEach(function(r){var raw=lastCrosstab.colNames.map(function(c){return lastCrosstab.matrix[r][c]}),values=raw.map(function(n){return $("#suppressSmallGroups").checked&&n>0&&n<suppressionThreshold()?"<"+suppressionThreshold():n});values.push(raw.reduce(function(s,n){return s+n},0));rows.push([r].concat(values))});var csv="\uFEFF"+rows.map(function(row){return row.map(csvCell).join(",")}).join("\r\n");downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),"Medevac_KPI_Crosstab_"+new Date().toISOString().slice(0,10)+".csv")}
+function quantile(a,q){if(!a.length)return null;var p=(a.length-1)*q,b=Math.floor(p),r=p-b;return a[b+1]==null?a[b]:a[b]+r*(a[b+1]-a[b])}function summarize(values){var a=values.filter(isNum).sort(function(x,y){return x-y});if(!a.length)return null;var mean=a.reduce(function(x,y){return x+y},0)/a.length,variance=a.length>1?a.reduce(function(s,v){return s+Math.pow(v-mean,2)},0)/(a.length-1):0;return{n:a.length,mean:mean,median:quantile(a,.5),sd:Math.sqrt(variance),min:a[0],q1:quantile(a,.25),q3:quantile(a,.75),max:a[a.length-1]}}
+function renderStatistics(){var measures=[{label:"Age at mission (years)",digits:1,get:function(r){return r.ageExactYears}},{label:"Weight (kg)",digits:1,get:function(r){return r.weightKg}},{label:"Patient flight duration (minutes)",digits:0,get:function(r){return r.durationMinutes}},{label:"Facility time (minutes)",digits:0,get:function(r){return r.facilityMinutes}},{label:"Pickup-to-handoff time (minutes)",digits:0,get:function(r){return r.pickupToHandoffMinutes}},{label:"Flight legs per case",digits:1,get:function(r){return r.legCount}},{label:"Vital-sign observations per case",digits:1,get:function(r){return r.vitalCount}},{label:"Lowest SpO₂ per case (%)",digits:1,get:function(r){return r.minSpo2}},{label:"Lowest heart rate per case (bpm)",digits:1,get:function(r){return r.minHr}},{label:"Highest heart rate per case (bpm)",digits:1,get:function(r){return r.maxHr}},{label:"Lowest MAP per case (mmHg)",digits:1,get:function(r){return r.minMap}},{label:"Lowest temperature per case",digits:1,get:function(r){return r.minTemp}},{label:"Highest temperature per case",digits:1,get:function(r){return r.maxTemp}},{label:"Lowest glucose per case",digits:1,get:function(r){return r.minGlucose}},{label:"Highest glucose per case",digits:1,get:function(r){return r.maxGlucose}},{label:"Arrival minus pickup SpO₂ (points)",digits:1,get:function(r){return r.spo2Change}},{label:"Arrival minus pickup MAP (mmHg)",digits:1,get:function(r){return r.mapChange}},{label:"Arrival minus pickup HR (bpm)",digits:1,get:function(r){return r.hrChange}},{label:"Lines / tubes / drains per case",digits:1,get:function(r){return r.lineCount}},{label:"Continuous infusions per case",digits:1,get:function(r){return r.infusionCount}},{label:"Laboratory results per case",digits:1,get:function(r){return r.labCount}},{label:"Total intake per case (mL)",digits:0,get:function(r){return r.intakeMl}},{label:"Total output per case (mL)",digits:0,get:function(r){return r.outputMl}},{label:"Medication administrations per case",digits:1,get:function(r){return r.medicationAdministrationCount}},{label:"Reanimation episodes per case",digits:2,get:function(r){return r.reanimationCount}}];$("#statsSummary").textContent=filteredRecords.length?"Statistics for "+filteredRecords.length.toLocaleString()+" matching case"+(filteredRecords.length===1?"":"s")+". Missing values are excluded measure by measure.":"No matching cases.";$("#statsBody").innerHTML=measures.map(function(m){var s=summarize(filteredRecords.map(m.get));return!s?'<tr><th>'+esc(m.label)+'</th><td colspan="7" class="text-muted">No recorded values</td></tr>':'<tr><th>'+esc(m.label)+'</th><td class="text-end">'+s.n+'</td><td class="text-end">'+fmt(s.mean,m.digits)+'</td><td class="text-end">'+fmt(s.median,m.digits)+'</td><td class="text-end">'+fmt(s.sd,m.digits)+'</td><td class="text-end">'+fmt(s.min,m.digits)+'</td><td class="text-end nowrap">'+fmt(s.q1,m.digits)+'–'+fmt(s.q3,m.digits)+'</td><td class="text-end">'+fmt(s.max,m.digits)+'</td></tr>'}).join("")}
+function renderVitalSigns(){var list=filteredRecords,n=list.length,withVitals=list.filter(function(r){return r.vitalCount>0}).length,deterioration=list.filter(function(r){return r.deterioration}).length;$("#vitalCases").textContent=displayCount(withVitals);$("#vitalCasesPct").textContent=fmtPct(pct(withVitals,n))+" of matches";$("#vitalDeterioration").textContent=displayCount(deterioration);$("#vitalDeteriorationPct").textContent=fmtPct(pct(deterioration,n))+" of matches";$("#vitalMeanSpo2").textContent=fmt(averageOf(list,function(r){return r.minSpo2}),1);$("#vitalMeanMap").textContent=fmt(averageOf(list,function(r){return r.minMap}),1);
+ var measures=[["Lowest SpO₂ (%)","minSpo2"],["Lowest MAP (mmHg)","minMap"],["Lowest HR (bpm)","minHr"],["Highest HR (bpm)","maxHr"],["Lowest temperature","minTemp"],["Highest temperature","maxTemp"],["Lowest glucose","minGlucose"],["Highest glucose","maxGlucose"],["Pickup-to-arrival SpO₂ change","spo2Change"],["Pickup-to-arrival MAP change","mapChange"],["Pickup-to-arrival HR change","hrChange"]];$("#vitalSummaryBody").innerHTML=measures.map(function(m){var s=summarize(list.map(function(r){return r[m[1]]}));return!s?'<tr><th>'+esc(m[0])+'</th><td colspan="5" class="text-muted">No recorded values</td></tr>':'<tr><th>'+esc(m[0])+'</th><td class="text-end">'+s.n+'</td><td class="text-end">'+fmt(s.mean,1)+'</td><td class="text-end">'+fmt(s.median,1)+'</td><td class="text-end">'+fmt(s.min,1)+'</td><td class="text-end">'+fmt(s.max,1)+'</td></tr>'}).join("");
+ var phaseMap=new Map;list.forEach(function(r){(r.vitalObservations||[]).forEach(function(v){var phase=clean(v.phase)||"Not recorded";if(!phaseMap.has(phase))phaseMap.set(phase,[]);phaseMap.get(phase).push(v)})});var phases=Array.from(phaseMap.entries()).sort(function(a,b){return b[1].length-a[1].length||a[0].localeCompare(b[0])});function avgObs(rows,key){var vals=rows.map(function(v){return v[key]}).filter(isNum);return vals.length?vals.reduce(function(a,b){return a+b},0)/vals.length:null}$("#vitalPhaseBody").innerHTML=phases.length?phases.map(function(x){var rows=x[1];return '<tr><th>'+esc(x[0])+'</th><td class="text-end">'+rows.length.toLocaleString()+'</td><td class="text-end">'+fmt(avgObs(rows,"hr"),1)+'</td><td class="text-end">'+fmt(avgObs(rows,"spo2"),1)+'</td><td class="text-end">'+fmt(avgObs(rows,"map"),1)+'</td><td class="text-end">'+fmt(avgObs(rows,"temp"),1)+'</td><td class="text-end">'+fmt(avgObs(rows,"glucose"),1)+'</td></tr>'}).join(""):'<tr><td colspan="7" class="text-muted">No vital-sign observations in the matching cohort.</td></tr>'}
+function renderCases(){var reveal=$("#showIdentifiers").checked,max=500,shown=filteredRecords.slice(0,max);$("#caseSummary").textContent=filteredRecords.length?filteredRecords.length.toLocaleString()+" matching case"+(filteredRecords.length===1?"":"s")+(filteredRecords.length>max?"; first "+max+" shown.":"."):"No matching cases.";$("#caseHead").innerHTML="<tr><th>Date</th><th>Trip</th><th>Client</th>"+(reveal?"<th>Patient</th><th>Identifier</th>":"")+"<th>Category</th><th>Age</th><th>Airway</th><th>Vented</th><th>Low-level</th><th>Reanimation</th><th>Complication</th></tr>";$("#caseBody").innerHTML=shown.map(function(r){return"<tr><td class=\"nowrap\">"+esc(r.missionDate||"—")+"</td><td>"+esc(r.tripNumber||"—")+"</td><td>"+esc(r.client||"—")+"</td>"+(reveal?"<td>"+esc(r.patientName||"—")+"</td><td>"+esc(r.patientIdentifier||"—")+"</td>":"")+"<td>"+esc(r.patientType||"—")+"</td><td class=\"nowrap\">"+esc(r.ageDisplay)+"</td><td>"+esc(r.intubated?"ETT":r.airwayType||"—")+"</td><td class=\""+(r.ventilated?"yes":"no")+"\">"+(r.ventilated?"Yes":"No")+"</td><td class=\""+(r.lowLevel?"yes":"no")+"\">"+(r.lowLevel?"Yes":"No")+"</td><td class=\""+(r.reanimationCount?"flag":"no")+"\">"+r.reanimationCount+"</td><td class=\""+(r.complication?"flag":"no")+"\">"+(r.complication?"Yes":"No")+"</td></tr>"}).join("")}
+function renderQuality(){var missingDate=records.filter(function(r){return!parseDate(r.missionDate)}).length,missingDob=records.filter(function(r){return!parseDate(r.dob)}).length,missingType=records.filter(function(r){return!r.patientType}).length,missingTrip=records.filter(function(r){return!r.tripNumber}).length,versions=sortedUnique(records.map(function(r){return r.appVersion||"Not recorded"})),items=[[records.length,"Unique cases in pool"],[sessionImport.duplicates,"Duplicates ignored in last import"],[sessionImport.invalid,"Invalid files in last import"],[missingDate,"Cases missing mission date"],[missingDob,"Cases missing DOB"],[missingType,"Cases missing patient category"],[missingTrip,"Cases missing trip number"],[versions.length,"Chart application versions"]];$("#qualityGrid").innerHTML=items.map(function(x){return"<div class=\"quality-item\"><strong>"+(+x[0]).toLocaleString()+"</strong><span class=\"text-small text-muted\">"+esc(x[1])+"</span></div>"}).join("");var defs=[["missionDate","Mission date"],["trip","Trip number"],["dob","Date of birth"],["patientType","Patient category"],["client","Client"],["diagnosis","Primary diagnosis"],["clinician","Clinician name and licence"],["handoff","Receiving handoff"],["arrivalVitals","Arrival vital signs"],["preFlightAssessment","Pre-flight assessment"],["preFlightChecklist","Pre-flight checklist"],["postFlightChecklist","Post-flight checklist"],["occurrenceForm","Occurrence tracking form"],["operationalForms","All operational forms present"],["itinerary","Itinerary"]],list=filteredRecords,total=list.length,completion=defs.map(function(d){var complete=list.filter(function(r){return r.completeness&&r.completeness[d[0]]}).length;return{label:d[1],complete:complete,missing:total-complete,rate:pct(complete,total)}});$("#completenessBody").innerHTML=completion.map(function(x){return"<tr><th>"+esc(x.label)+"</th><td class=\"text-end\">"+displayCount(x.complete)+"</td><td class=\"text-end\">"+displayCount(x.missing)+"</td><td class=\"text-end\">"+fmtPct(x.rate)+"</td></tr>"}).join("");var width=700,rowH=28,left=205,right=45,top=12,height=top+completion.length*rowH+15,pw=width-left-right,bars=completion.map(function(x,i){var y=top+i*rowH,bw=x.rate/100*pw;return"<text x=\""+(left-8)+"\" y=\""+(y+17)+"\" text-anchor=\"end\" fill=\"currentColor\" font-size=\"11\">"+esc(x.label)+"</text><rect x=\""+left+"\" y=\""+(y+4)+"\" width=\""+bw+"\" height=\"16\" fill=\"var(--viz-series-1)\"><title>"+esc(x.label+": "+fmtPct(x.rate))+"</title></rect><text x=\""+(left+bw+6)+"\" y=\""+(y+17)+"\" fill=\"currentColor\" font-size=\"11\">"+fmtPct(x.rate)+"</text>"}).join("");$("#completenessChart").innerHTML=completion.length?"<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Documentation completion rates\"><title>Documentation completeness</title><desc>Completion rate for key chart elements in matching cases.</desc>"+bars+"</svg>":"<div class=\"chart-empty\">No matching cases.</div>";var log=[];if(sessionImport.read)log.push("<li class=\"good\">Last import: "+sessionImport.read+" files read; "+sessionImport.added+" added; "+sessionImport.updated+" updated; "+sessionImport.duplicates+" duplicates ignored; "+sessionImport.invalid+" invalid.</li>");importLog.forEach(function(m){log.push("<li class=\"bad\">"+esc(m)+"</li>")});if(versions.length)log.push("<li>Application versions in pool: "+esc(versions.join(", "))+".</li>");if(!log.length)log.push("<li>No import activity yet.</li>");$("#qualityLog").innerHTML=log.join("")}
+function questionText(){var p=[];if($("#dateFrom").value||$("#dateTo").value)p.push("mission date "+($("#dateFrom").value||"earliest")+" to "+($("#dateTo").value||"latest"));if($("#patientTypeFilter").value)p.push("patient category = "+$("#patientTypeFilter").value);if($("#ageBandFilter").value)p.push("age group = "+$("#ageBandFilter").selectedOptions[0].textContent);if($("#airwayFilter").value)p.push("airway = "+$("#airwayFilter").selectedOptions[0].textContent);if($("#ventilatedFilter").value)p.push("mechanically ventilated = "+$("#ventilatedFilter").value);if($("#lowLevelFilter").value)p.push("low-level flight = "+$("#lowLevelFilter").value);if($("#reanimationFilter").value)p.push("reanimation = "+$("#reanimationFilter").value);if($("#clientFilter").value)p.push("client = "+$("#clientFilter").value);if($("#clinicianFilter").value)p.push("clinician = "+$("#clinicianFilter").value);if($("#textFilter").value)p.push("text contains “"+$("#textFilter").value+"”");conditionRows().forEach(function(row){var def=fieldDefinitions[row.querySelector(".condition-field").value],op=row.querySelector(".condition-operator").selectedOptions[0],v=row.querySelector(".condition-value").value;if(def&&v)p.push(def.label+" "+op.textContent+" "+v)});return p.length?p.join("; "):"All cases"}
+function renderQuestion(){$("#printQuestion").innerHTML="<strong>Analysis question:</strong> "+esc(questionText())+"<br><span class=\"text-small\">Generated "+esc(new Date().toLocaleString())+". Patient identifiers concealed.</span>"}
+function csvCell(v){return"\""+String(v==null?"":v).replace(/\"/g,"\"\"")+"\""}function downloadBlob(blob,name){var url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(url)},1e3)}
+function exportAggregateSummary(){
+ var list=filteredRecords.slice(),n=list.length;
+ function countWhere(fn){return list.filter(fn).length}
+ function rate(c){return n?c/n*100:null}
+ function row(label,value,unit,denominator,definition){return[label,value==null?"":value,unit||"",denominator==null?"":denominator,definition||""]}
+ var rows=[];
+ rows.push(["Medevac KPI aggregate export","","","",""]);
+ rows.push(["Generated",new Date().toLocaleString(),"","",""]);
+ rows.push(["Analysis question",questionText(),"","",""]);
+ rows.push(["","","","",""]);
+ rows.push(["Indicator","Value","Unit","Denominator","Definition / note"]);
+ var privacyOn=$("#suppressSmallGroups").checked,threshold=suppressionThreshold(),cohortSmall=privacyOn&&n>0&&n<threshold,displayN=cohortSmall?"<"+threshold:n;rows.push(row("Total matching missions",displayN,"missions",displayN,"Unique matching cases after duplicate reconciliation."));
+ [["Adult",function(r){return lower(r.patientType)==="adult"}],
+  ["Pediatric",function(r){return lower(r.patientType)==="pediatric"}],
+  ["Neonatal",function(r){return lower(r.patientType)==="neonatal"}],
+  ["Intubated / ETT",function(r){return r.intubated}],
+  ["Mechanically ventilated",function(r){return r.ventilated}],
+  ["Low-level flight",function(r){return r.lowLevel}],
+  ["Reanimation",function(r){return r.reanimationCount>0}],
+  ["Documented deterioration",function(r){return r.deterioration}],
+  ["Complication",function(r){return r.complication}],
+  ["Occurrence",function(r){return r.occurrence}],
+  ["Vasoactive medication / infusion",function(r){return r.vasoactive}],
+  ["Documented delay",function(r){return r.delayDocumented}],
+  ["Temporary facility admission",function(r){return r.temporaryAdmission}]
+ ].forEach(function(x){var c=countWhere(x[1]),small=privacyOn&&c>0&&c<threshold;rows.push(row(x[0]+" — count",small?"<"+threshold:c,"cases",displayN,small?"Small-group count suppressed.":""));rows.push(row(x[0]+" — rate",small?"Suppressed":rate(c),"percent",displayN,small?"Rate suppressed because it could reveal a small-group count.":""))});
+ [
+  ["Age at mission",function(r){return r.ageExactYears},"years"],
+  ["Weight",function(r){return r.weightKg},"kg"],
+  ["Patient flight duration",function(r){return r.durationMinutes},"minutes"],
+  ["Facility time",function(r){return r.facilityMinutes},"minutes"],
+  ["Pickup-to-handoff time",function(r){return r.pickupToHandoffMinutes},"minutes"],
+  ["Flight legs",function(r){return r.legCount},"legs"],
+  ["Lines / tubes / drains",function(r){return r.lineCount},"items"],
+  ["Continuous infusions",function(r){return r.infusionCount},"infusions"],
+  ["Medication administrations",function(r){return r.medicationAdministrationCount},"administrations"],
+  ["Laboratory results",function(r){return r.labCount},"results"],
+  ["Vital-sign observations",function(r){return r.vitalCount},"observations"],
+  ["Lowest SpO2 per case",function(r){return r.minSpo2},"percent"],
+  ["Lowest MAP per case",function(r){return r.minMap},"mmHg"],
+  ["Lowest heart rate per case",function(r){return r.minHr},"bpm"],
+  ["Highest heart rate per case",function(r){return r.maxHr},"bpm"],
+  ["Pickup-to-arrival SpO2 change",function(r){return r.spo2Change},"percentage points"],
+  ["Pickup-to-arrival MAP change",function(r){return r.mapChange},"mmHg"],
+  ["Pickup-to-arrival heart-rate change",function(r){return r.hrChange},"bpm"],
+  ["Total intake",function(r){return r.intakeMl},"mL"],
+  ["Total output",function(r){return r.outputMl},"mL"]
+ ].forEach(function(x){var vals=list.map(x[1]).filter(isNum),small=privacyOn&&vals.length>0&&vals.length<threshold;rows.push(row("Mean "+x[0],small?"Suppressed":vals.length?vals.reduce(function(a,b){return a+b},0)/vals.length:null,x[2],small?"<"+threshold:vals.length,small?"Small-group numerical summary suppressed.":"Missing values excluded measure by measure."))});
+ rows.push(["","","","",""]);
+ rows.push(["Privacy note","Aggregate export contains no patient names, identifiers or dates of birth.","","",""]);
+ var csv="\uFEFF"+rows.map(function(r){return r.map(csvCell).join(",")}).join("\r\n");
+ downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),"Medevac_KPI_Aggregate_Summary_"+new Date().toISOString().slice(0,10)+".csv")
+}
+function exportCaseCsv(reveal){reveal=!!reveal;if(reveal&&!confirm("This export will contain patient identifiers. Continue only if the destination is authorized and secure."))return;var headers=["Mission date","Trip number","Client","Flight number","Aircraft"];if(reveal)headers=headers.concat(["Patient name","Patient identifier","DOB"]);headers=headers.concat(["Patient category","Age at mission","Sex","Clinical category","Primary diagnosis","Sending facility","Receiving facility","Route","Airway","Intubated","Mechanically ventilated","Ventilator mode","Low-level flight","Reanimation episodes","Documented deterioration","Complication","Occurrence","Occurrence phases","Documented delay","Temporary facility admission","Assigned clinicians","Medications administered","Current medications","Continuous infusions","Line / tube / drain types","Lines / tubes / drains","Laboratory results","Vital-sign observations","Lowest SpO2","Lowest MAP","Lowest HR","Highest HR","Lowest temperature","Highest temperature","Lowest glucose","Highest glucose","Pickup-to-arrival SpO2 change","Pickup-to-arrival MAP change","Pickup-to-arrival HR change","Patient flight duration minutes","Facility time minutes","Pickup-to-handoff minutes","Total intake mL","Total output mL","Chart version"]);var rows=filteredRecords.map(function(r){var v=[r.missionDate,r.tripNumber,r.client,r.flightNumber,r.aircraft];if(reveal)v=v.concat([r.patientName,r.patientIdentifier,r.dob]);return v.concat([r.patientType,r.ageDisplay,r.sex,r.category,r.primaryDiagnosis,r.sendingFacility,r.receivingFacility,r.route,r.airwayType,r.intubated?"Yes":"No",r.ventilated?"Yes":"No",r.ventMode,r.lowLevel?"Yes":"No",r.reanimationCount,r.deterioration?"Yes":"No",r.complication?"Yes":"No",r.occurrence?"Yes":"No",r.occurrencePhases.join("; "),r.delayDocumented?"Yes":"No",r.temporaryAdmission?"Yes":"No",r.clinicians.join("; "),r.medications.join("; "),r.currentMedications.join("; "),r.infusionCount,r.lineTypes.join("; "),r.lineCount,r.labCount,r.vitalCount,r.minSpo2,r.minMap,r.minHr,r.maxHr,r.minTemp,r.maxTemp,r.minGlucose,r.maxGlucose,r.spo2Change,r.mapChange,r.hrChange,r.durationMinutes,r.facilityMinutes,r.pickupToHandoffMinutes,r.intakeMl,r.outputMl,r.appVersion])}),csv="\uFEFF"+[headers].concat(rows).map(function(row){return row.map(csvCell).join(",")}).join("\r\n"),suffix=reveal?"Identifiable":"Deidentified";downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),"Medevac_KPI_"+suffix+"_Cases_"+new Date().toISOString().slice(0,10)+".csv")}
+function backupPool(){var payload={format:"medevac-kpi-analyzer-backup",version:1,exportedAt:new Date().toISOString(),cases:storedCases,settings:{savedQueries:savedQueries,savedReports:savedReports,suppressSmall:$("#suppressSmallGroups").checked,threshold:suppressionThreshold()}};downloadBlob(new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),"Medevac_KPI_Pool_Backup_"+new Date().toISOString().slice(0,10)+".json")}
+async function restorePoolBackup(file){try{var data=JSON.parse(await file.text());if(!data||data.format!=="medevac-kpi-analyzer-backup"||!Array.isArray(data.cases))throw Error("Not a Medevac KPI pool backup");var map=new Map(storedCases.map(function(x){return[x.dedupeKey,x]})),added=0,updated=0;for(var i=0;i<data.cases.length;i++){var item=data.cases[i];if(!item||!item.dedupeKey||!item.data)continue;var existing=map.get(item.dedupeKey);if(!existing){map.set(item.dedupeKey,item);await dbPut(item);added++}else if((item.sortTime||0)>(existing.sortTime||0)){map.set(item.dedupeKey,item);await dbPut(item);updated++}}storedCases=Array.from(map.values());records=storedCases.map(normalizeCase);if(data.settings){savedQueries=Array.isArray(data.settings.savedQueries)?data.settings.savedQueries:savedQueries;savedReports=Array.isArray(data.settings.savedReports)?data.settings.savedReports:savedReports;$("#suppressSmallGroups").checked=!!data.settings.suppressSmall;if(data.settings.threshold)$("#suppressionThreshold").value=data.settings.threshold;saveSettings();refreshSavedQueries();refreshSavedReports()}refreshOptions();applyFilters();setStatus("Pool restored: "+added+" cases added, "+updated+" updated.","success")}catch(error){setStatus(error&&error.message?error.message:"The backup could not be restored.","error")}}
+function utcDate(y,m,d){return new Date(Date.UTC(y,m,d))}function reportRange(key){var now=new Date,y=now.getFullYear(),m=now.getMonth(),q=Math.floor(m/3)*3,start,end,label;if(key==="thisMonth"){start=utcDate(y,m,1);end=utcDate(y,m+1,0);label=start.toLocaleString(undefined,{month:"long",year:"numeric",timeZone:"UTC"})}else if(key==="lastMonth"){start=utcDate(y,m-1,1);end=utcDate(y,m,0);label=start.toLocaleString(undefined,{month:"long",year:"numeric",timeZone:"UTC"})}else if(key==="thisQuarter"){start=utcDate(y,q,1);end=utcDate(y,q+3,0);label="Q"+(q/3+1)+" "+y}else if(key==="lastQuarter"){start=utcDate(y,q-3,1);end=utcDate(y,q,0);label="Q"+(Math.floor(start.getUTCMonth()/3)+1)+" "+start.getUTCFullYear()}else if(key==="thisYear"){start=utcDate(y,0,1);end=utcDate(y,11,31);label=String(y)}else if(key==="lastYear"){start=utcDate(y-1,0,1);end=utcDate(y-1,11,31);label=String(y-1)}else return null;var days=Math.floor((end-start)/864e5)+1,prevEnd=new Date(start.getTime()-864e5),prevStart=new Date(prevEnd.getTime()-(days-1)*864e5);return{start:start,end:end,label:label,previous:{start:prevStart,end:prevEnd,label:isoDate(prevStart)+" to "+isoDate(prevEnd)}}}
+function casesInRange(list,range){return list.filter(function(r){var d=parseDate(r.missionDate);return d&&d>=range.start&&d<=range.end})}
+function reportTrendSvg(list){var points=trendBuckets(list,"month");if(!points.length)return"<div class=\"text-muted\">No valid mission dates.</div>";var width=820,height=230,left=50,right=20,top=25,bottom=50,pw=width-left-right,ph=height-top-bottom,max=Math.max.apply(null,points.map(function(p){return p.value}).concat([1])),barW=Math.max(6,Math.min(48,pw/points.length*.7)),every=Math.max(1,Math.ceil(points.length/9)),marks=points.map(function(p,i){var x=left+(i+.5)*pw/points.length,h=p.value/max*ph,y=top+ph-h;return"<rect x=\""+(x-barW/2)+"\" y=\""+y+"\" width=\""+barW+"\" height=\""+h+"\" fill=\"var(--viz-series-1)\"><title>"+esc(p.key+": "+p.value+" cases")+"</title></rect><text x=\""+x+"\" y=\""+(y-5)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">"+p.value+"</text>"+((i%every===0||i===points.length-1)?"<text x=\""+x+"\" y=\""+(height-22)+"\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"10\">"+esc(p.key)+"</text>":"")}).join("");return"<svg viewBox=\"0 0 "+width+" "+height+"\" role=\"img\" aria-label=\"Mission volume by month\"><title>Mission volume trend</title><desc>Unique cases in the reporting cohort by month.</desc><line x1=\""+left+"\" x2=\""+(width-right)+"\" y1=\""+(top+ph)+"\" y2=\""+(top+ph)+"\" stroke=\"var(--border)\"/>"+marks+"</svg>"}
+function reportKpis(list){var n=list.length;return[["Total missions",n,null],["Pediatric",list.filter(function(r){return lower(r.patientType)==="pediatric"}).length,"rate"],["Neonatal",list.filter(function(r){return lower(r.patientType)==="neonatal"}).length,"rate"],["Infants under one year",list.filter(function(r){return r.underOne}).length,"rate"],["Intubated / ETT",list.filter(function(r){return r.intubated}).length,"rate"],["Mechanically ventilated",list.filter(function(r){return r.ventilated}).length,"rate"],["Vasoactive medication involved",list.filter(function(r){return r.vasoactive}).length,"rate"],["Low-level flights",list.filter(function(r){return r.lowLevel}).length,"rate"],["Reanimation recorded",list.filter(function(r){return r.reanimationCount>0}).length,"rate"],["Documented deterioration",list.filter(function(r){return r.deterioration}).length,"rate"],["Complication documented",list.filter(function(r){return r.complication}).length,"rate"],["Occurrence reported",list.filter(function(r){return r.occurrence}).length,"rate"],["Documented delay",list.filter(function(r){return r.delayDocumented}).length,"rate"],["Temporary facility admission",list.filter(function(r){return r.temporaryAdmission}).length,"rate"]]}
+function generateReport(){var key=$("#reportPeriod").value,range=reportRange(key),reportBase=records.filter(function(r){return recordMatchesCurrent(r,true)}),list=range?casesInRange(reportBase,range):filteredRecords.slice(),previous=range&&$("#reportComparePrevious").checked?casesInRange(reportBase,range.previous):[],title=clean($("#reportTitle").value)||"Medevac Clinical & Operational KPI Report",periodLabel=range?range.label:"Current filtered cohort",kpis=reportKpis(list),previousKpis=reportKpis(previous),n=list.length,suppressCohort=$("#suppressSmallGroups").checked&&n>0&&n<suppressionThreshold(),clinicalRows=kpis.map(function(k,i){var small=$("#suppressSmallGroups").checked&&k[1]>0&&k[1]<suppressionThreshold(),rate=k[2]?(small?"Suppressed":fmtPct(pct(k[1],n))):"—",previousSmall=previous.length&&$("#suppressSmallGroups").checked&&previousKpis[i][1]>0&&previousKpis[i][1]<suppressionThreshold(),previousValue=previous.length?(previousSmall?"Suppressed":previousKpis[i][2]?fmtPct(pct(previousKpis[i][1],previous.length)):displayCount(previousKpis[i][1])):"—";return"<tr><th>"+esc(k[0])+"</th><td class=\"text-end\">"+(small?"&lt;"+suppressionThreshold():displayCount(k[1]))+"</td><td class=\"text-end\">"+rate+"</td>"+(previous.length?"<td class=\"text-end\">"+previousValue+"</td>":"")+"</tr>"}).join(""),ops=[["Mean patient flight duration",averageOf(list,function(r){return r.durationMinutes}),"minutes"],["Mean facility time",averageOf(list,function(r){return r.facilityMinutes}),"minutes"],["Mean pickup-to-handoff time",averageOf(list,function(r){return r.pickupToHandoffMinutes}),"minutes"],["Mean flight legs",averageOf(list,function(r){return r.legCount}),"per case"],["Mean lines / tubes / drains",averageOf(list,function(r){return r.lineCount}),"per case"],["Mean continuous infusions",averageOf(list,function(r){return r.infusionCount}),"per case"],["Mean medication administrations",averageOf(list,function(r){return r.medicationAdministrationCount}),"per case"],["Mean laboratory results",averageOf(list,function(r){return r.labCount}),"per case"],["Mean vital-sign observations",averageOf(list,function(r){return r.vitalCount}),"per case"],["Mean lowest SpO₂",averageOf(list,function(r){return r.minSpo2}),"%"],["Mean lowest MAP",averageOf(list,function(r){return r.minMap}),"mmHg"],["Mean highest HR",averageOf(list,function(r){return r.maxHr}),"bpm"],["Mean pickup-to-arrival SpO₂ change",averageOf(list,function(r){return r.spo2Change}),"percentage points"]],opsRows=ops.map(function(o){return"<tr><th>"+esc(o[0])+"</th><td class=\"text-end\">"+(suppressCohort?"Suppressed":fmt(o[1],1))+"</td><td>"+esc(o[2])+"</td></tr>"}).join(""),defs=[["missionDate","Mission date"],["trip","Trip number"],["dob","DOB"],["patientType","Patient category"],["client","Client"],["diagnosis","Primary diagnosis"],["clinician","Clinician and licence"],["handoff","Handoff"],["arrivalVitals","Arrival vital signs"],["preFlightAssessment","Pre-flight assessment"],["preFlightChecklist","Pre-flight checklist"],["postFlightChecklist","Post-flight checklist"],["occurrenceForm","Occurrence tracking form"],["operationalForms","All operational forms"]],completionRows=defs.map(function(d){var complete=list.filter(function(r){return r.completeness&&r.completeness[d[0]]}).length;return"<tr><th>"+esc(d[1])+"</th><td class=\"text-end\">"+(suppressCohort?"Suppressed":fmtPct(pct(complete,n)))+"</td></tr>"}).join("");$("#reportPreview").innerHTML="<header><h2>"+esc(title)+"</h2><div class=\"report-meta\"><span><strong>Period:</strong> "+esc(periodLabel)+"</span><span><strong>Generated:</strong> "+esc(new Date().toLocaleString())+"</span><span><strong>Cohort:</strong> "+(suppressCohort?"&lt;"+suppressionThreshold():n.toLocaleString())+" unique cases</span></div><p class=\"text-small\">Patient identifiers are excluded. "+($("#suppressSmallGroups").checked?"Counts below "+suppressionThreshold()+" are suppressed.":"Small-group suppression is not enabled.")+"</p></header><section class=\"report-section\"><h3>Mission volume</h3>"+(suppressCohort?"<p class=\"text-muted\">Mission-volume chart suppressed because the selected cohort is below the privacy threshold.</p>":reportTrendSvg(list))+"</section><section class=\"report-section analysis-grid\"><div><h3>Clinical and safety KPIs</h3><div class=\"table-responsive\"><table class=\"table table-sm\"><thead><tr><th>Indicator</th><th class=\"text-end\">Cases</th><th class=\"text-end\">Rate</th>"+(previous.length?"<th class=\"text-end\">Previous period</th>":"")+"</tr></thead><tbody>"+clinicalRows+"</tbody></table></div></div><div><h3>Operational and workload KPIs</h3><div class=\"table-responsive\"><table class=\"table table-sm\"><thead><tr><th>Indicator</th><th class=\"text-end\">Value</th><th>Unit</th></tr></thead><tbody>"+opsRows+"</tbody></table></div></div></section><section class=\"report-section\"><h3>Documentation completeness</h3><div class=\"table-responsive\"><table class=\"table table-sm\"><thead><tr><th>Element</th><th class=\"text-end\">Completion</th></tr></thead><tbody>"+completionRows+"</tbody></table></div></section><section class=\"report-section text-small\"><h3>Definitions and limitations</h3><p>Age is calculated from DOB on the mission date. Intubation and mechanical ventilation are separate indicators. Each mission is deduplicated using trip number, mission date and patient identifier, with the newest export retained. Missing values are excluded from numerical averages. Documented deterioration is based on explicit chart language rather than an inferred severity threshold. These descriptive indicators do not constitute a validated clinical severity score.</p></section>";activateTab("reportPanel")}
+
+function aiDefaultPlan(){return{filters:{dateFrom:"",dateTo:"",patientType:"",ageBand:"",airway:"",ventilated:"",lowLevel:"",reanimation:"",client:"",clinician:"",text:"",conditionMode:"all",conditions:[]},result:{type:"count",groupBy:"",chartType:"bar",metric:"",interval:"month"},explanation:""}}
+function aiClone(v){return JSON.parse(JSON.stringify(v))}
+function aiSetStatus(message,state){var e=$("#aiStatus");e.textContent=message;e.className="ai-status text-small"+(state?" "+state:"")}
+function aiUpdateBadge(){var mode=$("#aiMode").value,endpoint=clean($("#aiEndpoint").value),text=mode==="local"?"Local interpreter":mode==="online"?(endpoint?"Online AI configured":"Online AI needs endpoint"):(endpoint?"Auto: online + local fallback":"Local interpreter ready");$("#aiModeBadge").textContent=text}
+function aiSaveConnection(){try{localStorage.setItem("medevac-kpi-ai-connection-v1",JSON.stringify({mode:$("#aiMode").value,endpoint:clean($("#aiEndpoint").value)}));aiUpdateBadge();aiSetStatus("AI connection settings saved in this browser.","success")}catch(e){aiSetStatus("AI connection settings could not be saved.","error")}}
+function aiLoadConnection(){try{var d=JSON.parse(localStorage.getItem("medevac-kpi-ai-connection-v1")||"{}");if(d.mode)$("#aiMode").value=d.mode;if(d.endpoint)$("#aiEndpoint").value=d.endpoint}catch(e){}aiUpdateBadge()}
+function aiAddPlanCondition(plan,field,operator,value){if(!fieldDefinitions[field]||value==null||value==="")return;plan.filters.conditions=plan.filters.conditions||[];var exists=plan.filters.conditions.some(function(c){return c.field===field&&c.operator===operator&&String(c.value)===String(value)});if(!exists)plan.filters.conditions.push({field:field,operator:operator,value:String(value)})}
+function aiDateRangeFromWords(q,plan){var now=new Date(),y=now.getFullYear(),m=now.getMonth(),start=null,end=null,ym=q.match(/\b(20\d{2})\b/);if(/\bthis month\b/.test(q)){start=new Date(y,m,1);end=new Date(y,m+1,0)}else if(/\blast month\b/.test(q)){start=new Date(y,m-1,1);end=new Date(y,m,0)}else if(/\bthis (?:calendar )?year\b/.test(q)){start=new Date(y,0,1);end=new Date(y,11,31)}else if(/\blast (?:calendar )?year\b/.test(q)){start=new Date(y-1,0,1);end=new Date(y-1,11,31)}else if(/\blast 12 months\b|\bpast 12 months\b/.test(q)){start=new Date(y,m-11,1);end=new Date(y,m+1,0)}else if(ym){var yy=+ym[1];start=new Date(yy,0,1);end=new Date(yy,11,31)}if(start||end){plan.filters.dateFrom=localIso(start);plan.filters.dateTo=localIso(end)}}
+function aiMatchKnownValue(q,values,minLen){var candidates=sortedUnique(values).filter(function(v){return clean(v).length>=(minLen||4)}).sort(function(a,b){return b.length-a.length});for(var i=0;i<candidates.length;i++){if(q.indexOf(lower(candidates[i]))>=0)return candidates[i]}return""}
+function aiLocalPlan(question,useContext){var q=lower(question),plan=useContext&&aiLastPlan?aiClone(aiLastPlan):aiDefaultPlan();if(/\b(new|start over|reset|all cases)\b/.test(q))plan=aiDefaultPlan();plan.explanation="Interpreted locally from your wording.";aiDateRangeFromWords(q,plan);
+ if(/\bpaediatric\b|\bpediatric\b|\bchild(?:ren)?\b/.test(q))plan.filters.patientType="Pediatric";
+ if(/\bneonatal\b|\bneonate\b|\bnewborn\b/.test(q)){plan.filters.patientType="Neonatal";plan.filters.ageBand="neonate"}
+ if(/\badult\b/.test(q)&&!/older adult/.test(q))plan.filters.patientType="Adult";
+ if(/\binfant\b|\bunder (?:the age of )?1\b|\bunder one year\b|\bless than one year\b/.test(q))plan.filters.ageBand="infant";
+ var underAge=q.match(/\bunder (?:age )?(\d{1,2})\b/);if(underAge&&+underAge[1]!==1)aiAddPlanCondition(plan,"ageYears","lt",underAge[1]);
+ var overAge=q.match(/\b(?:over|older than|at least) (?:age )?(\d{1,3})\b/);if(overAge)aiAddPlanCondition(plan,"ageYears",/at least/.test(overAge[0])?"gte":"gt",overAge[1]);
+ if(/\bintubat(?:ed|ion)\b|\bett\b/.test(q))plan.filters.airway="intubated";
+ if(/\btracheostom/.test(q))plan.filters.airway="tracheostomy";
+ if(/\bventilat(?:ed|or|ion)\b|\bvented\b/.test(q))plan.filters.ventilated=/\bnot ventilated\b|\bnon[- ]ventilated\b/.test(q)?"no":"yes";
+ if(/\blow[- ]level\b/.test(q))plan.filters.lowLevel="yes";
+ if(/\breanimation\b|\bresuscitation\b/.test(q))plan.filters.reanimation=/\bno reanimation\b|\bwithout reanimation\b/.test(q)?"no":"yes";
+ if(/\boccurrence\b|\bincident\b/.test(q))aiAddPlanCondition(plan,"occurrence",/\bno occurrence\b|\bwithout occurrence\b/.test(q)?"isNot":"is","yes");
+ if(/\bcomplication\b/.test(q))aiAddPlanCondition(plan,"complication",/\bno complication\b|\bwithout complication\b/.test(q)?"isNot":"is","yes");
+ if(/\bvasoactive\b|\bvasopressor\b/.test(q))aiAddPlanCondition(plan,"vasoactive","is","yes");
+ if(/\bdeteriorat|\bdecompensat|\bclinical decline\b/.test(q))aiAddPlanCondition(plan,"deterioration","is","yes");
+ if(/\bdelay\b|\bdelayed\b/.test(q))aiAddPlanCondition(plan,"delayDocumented","is","yes");
+ if(/\btemporary admission\b|\btemporarily admitted\b/.test(q))aiAddPlanCondition(plan,"temporaryAdmission","is","yes");
+ if(/\bincomplete\b|\bmissing\b|\bempty\b|\bcompletion\b|\bcompleteness\b/.test(q)){var p=q.match(/(?:under|below|less than)\s*(\d{1,3})\s*%/);if(p)aiAddPlanCondition(plan,"documentationCompleteness","lt",p[1])}
+ if(/\bpre[- ]flight assessment\b/.test(q)&&/\bmissing|incomplete|empty|not completed\b/.test(q))aiAddPlanCondition(plan,"preFlightAssessment","is","no");
+ if(/\bpre[- ]flight checklist\b/.test(q)&&/\bmissing|incomplete|empty|not completed\b/.test(q))aiAddPlanCondition(plan,"preFlightChecklist","is","no");
+ if(/\bpost[- ]flight checklist\b/.test(q)&&/\bmissing|incomplete|empty|not completed\b/.test(q))aiAddPlanCondition(plan,"postFlightChecklist","is","no");
+ var med=aiMatchKnownValue(q,records.reduce(function(a,r){return a.concat(r.medications,r.currentMedications)},[]),4);if(med)aiAddPlanCondition(plan,"medication","contains",med);
+ var cli=aiMatchKnownValue(q,records.reduce(function(a,r){return a.concat(r.clinicians)},[]),5);if(cli)plan.filters.clinician=cli;
+ var client=aiMatchKnownValue(q,records.map(function(r){return r.client}),5);if(client)plan.filters.client=client;
+ var fac=aiMatchKnownValue(q,records.reduce(function(a,r){return a.concat(r.facilitiesRoutes)},[]),5);if(fac&&!client)aiAddPlanCondition(plan,"facility","contains",fac);
+ if(/\bwhich clinician|\bclinicians?.*(?:incomplete|missing|empty)|(?:incomplete|missing|empty).*clinicians?/.test(q))plan.result={type:"quality_by_clinician",groupBy:"clinicians",chartType:"bar",metric:"documentationCompleteness",interval:"month"};
+ else if(/\bby clinician\b|\bbroken down by clinician\b/.test(q))plan.result={type:"breakdown",groupBy:"clinicians",chartType:/\bpie\b|\bdonut\b/.test(q)?"donut":"bar",metric:"",interval:"month"};
+ else if(/\bby client\b/.test(q))plan.result={type:"breakdown",groupBy:"client",chartType:/\bpie\b|\bdonut\b/.test(q)?"donut":"bar",metric:"",interval:"month"};
+ else if(/\bby aircraft\b|\bper aircraft\b/.test(q))plan.result={type:"breakdown",groupBy:"aircraft",chartType:"bar",metric:"",interval:"month"};
+ else if(/\bby diagnosis\b/.test(q))plan.result={type:"breakdown",groupBy:"primaryDiagnosis",chartType:"bar",metric:"",interval:"month"};
+ else if(/\bby medication\b/.test(q))plan.result={type:"breakdown",groupBy:"medications",chartType:"bar",metric:"",interval:"month"};
+ else if(/\bby month\b|\bmonthly\b/.test(q))plan.result={type:"trend",groupBy:"",chartType:"bar",metric:"",interval:"month"};
+ else if(/\bby year\b|\byearly\b|\bannual\b/.test(q))plan.result={type:"trend",groupBy:"",chartType:"bar",metric:"",interval:"year"};
+ else if(/\bshow|\blist\b/.test(q)&&/\bcases?\b/.test(q))plan.result={type:"matching_cases",groupBy:"",chartType:"bar",metric:"",interval:"month"};
+ return aiSanitizePlan(plan)}
+function aiSanitizePlan(input){var base=aiDefaultPlan(),p=input&&typeof input==="object"?input:{},f=p.filters&&typeof p.filters==="object"?p.filters:{},r=p.result&&typeof p.result==="object"?p.result:{};["dateFrom","dateTo","patientType","ageBand","airway","ventilated","lowLevel","reanimation","client","clinician","text"].forEach(function(k){base.filters[k]=clean(f[k])});base.filters.conditionMode=f.conditionMode==="any"?"any":"all";base.filters.conditions=Array.isArray(f.conditions)?f.conditions.filter(function(c){return c&&fieldDefinitions[c.field]&&operatorOptions(fieldDefinitions[c.field].type).some(function(o){return o[0]===c.operator})}).map(function(c){return{field:c.field,operator:c.operator,value:String(c.value==null?"":c.value)}}):[];var types=["count","breakdown","trend","quality_by_clinician","matching_cases","statistics"],groups=Object.keys(breakdownDefinitions);base.result.type=types.indexOf(r.type)>=0?r.type:"count";base.result.groupBy=groups.indexOf(r.groupBy)>=0?r.groupBy:"";base.result.chartType=r.chartType==="donut"?"donut":"bar";base.result.metric=numericMeasures[r.metric]?r.metric:(r.metric==="documentationCompleteness"?r.metric:"");base.result.interval=r.interval==="year"?"year":"month";base.explanation=clean(p.explanation);return base}
+function aiApplyPlan(plan){applySnapshot(plan.filters);if(plan.result.type==="breakdown"&&plan.result.groupBy){$("#breakdownGroup").value=plan.result.groupBy;$("#breakdownType").value=plan.result.chartType||"bar";renderBreakdown()}if(plan.result.type==="trend"){$("#trendInterval").value=plan.result.interval||"month";renderTrend()}if(plan.result.type==="matching_cases")activateTab("casesPanel");else activateTab("dashboardPanel")}
+function aiQualityByClinician(list){var map=new Map,keys=["missionDate","trip","dob","patientType","client","diagnosis","clinician","handoff","arrivalVitals","preFlightAssessment","preFlightChecklist","postFlightChecklist","occurrenceForm","itinerary"];list.forEach(function(r){(r.clinicians.length?r.clinicians:["Clinician not recorded"]).forEach(function(name){if(!map.has(name))map.set(name,{name:name,cases:0,total:0,possible:0,missingOps:0,missingPre:0,missingPost:0,missingOccurrence:0});var x=map.get(name);x.cases++;keys.forEach(function(k){x.possible++;if(r.completeness&&r.completeness[k])x.total++});if(!(r.completeness&&r.completeness.operationalForms))x.missingOps++;if(!(r.completeness&&r.completeness.preFlightChecklist))x.missingPre++;if(!(r.completeness&&r.completeness.postFlightChecklist))x.missingPost++;if(!(r.completeness&&r.completeness.occurrenceForm))x.missingOccurrence++})});return Array.from(map.values()).map(function(x){x.percent=x.possible?100*x.total/x.possible:0;return x}).sort(function(a,b){return a.percent-b.percent||b.cases-a.cases||a.name.localeCompare(b.name)})}
+function aiRenderResult(plan,source){var host=$("#aiResult"),n=filteredRecords.length,total=records.length,desc=questionText(),head="<h3>AI query result</h3><p><strong>"+n.toLocaleString()+" matching case"+(n===1?"":"s")+"</strong> of "+total.toLocaleString()+" total.</p><p class=\"text-small text-muted\">Applied: "+esc(desc)+"</p>";if(plan.explanation)head+="<p class=\"text-small\">"+esc(plan.explanation)+"</p>";if(plan.result.type==="quality_by_clinician"){var rows=aiQualityByClinician(filteredRecords),top=rows.slice(0,12);head+="<p class=\"text-small privacy-warning\">Documentation gaps are associated with every clinician assigned to a case; this does not establish which clinician was responsible for a missing entry.</p><div class=\"table-responsive\"><table class=\"table table-sm\"><thead><tr><th>Clinician</th><th class=\"text-end\">Cases</th><th class=\"text-end\">Completeness</th><th class=\"text-end\">Missing all operational forms</th><th class=\"text-end\">Missing pre-flight checklist</th><th class=\"text-end\">Missing post-flight checklist</th></tr></thead><tbody>"+top.map(function(x){return"<tr><th>"+esc(x.name)+"</th><td class=\"text-end\">"+x.cases+"</td><td class=\"text-end\">"+fmt(x.percent,1)+"%</td><td class=\"text-end\">"+x.missingOps+"</td><td class=\"text-end\">"+x.missingPre+"</td><td class=\"text-end\">"+x.missingPost+"</td></tr>"}).join("")+"</tbody></table></div>"}else if(plan.result.type==="breakdown"&&plan.result.groupBy){var def=breakdownDefinitions[plan.result.groupBy],counts=groupCounts(filteredRecords,plan.result.groupBy).entries.slice(0,12);head+="<div class=\"table-responsive\"><table class=\"table table-sm\"><thead><tr><th>"+esc(def.label)+"</th><th class=\"text-end\">Cases</th></tr></thead><tbody>"+counts.map(function(x){return"<tr><th>"+esc(x.label)+"</th><td class=\"text-end\">"+x.value+"</td></tr>"}).join("")+"</tbody></table></div>"}else if(plan.result.type==="trend"){head+="<p class=\"text-small\">The mission-trend chart has been set to "+esc(plan.result.interval)+" intervals.</p>"}else if(plan.result.type==="matching_cases"){head+="<p class=\"text-small\">The Matching cases tab has been opened with this cohort.</p>"}host.innerHTML=head;aiSetStatus((source==="online"?"Online AI":"Local interpreter")+" translated the question; the browser analytics engine calculated the result.","success")}
+function aiPayload(question){return{version:"medevac-kpi-ai-v1",question:question,previousQuestion:$("#aiUseContext").checked?aiLastQuestion:"",previousPlan:$("#aiUseContext").checked?aiLastPlan:null,allowedFields:Object.keys(fieldDefinitions).map(function(k){return{key:k,label:fieldDefinitions[k].label,type:fieldDefinitions[k].type,operators:operatorOptions(fieldDefinitions[k].type).map(function(o){return o[0]})}}),allowedBreakdowns:Object.keys(breakdownDefinitions).map(function(k){return{key:k,label:breakdownDefinitions[k].label}}),allowedResults:["count","breakdown","trend","quality_by_clinician","matching_cases","statistics"],today:localIso(new Date())}}
+async function aiOnlinePlan(question){var endpoint=clean($("#aiEndpoint").value);if(!endpoint)throw Error("No AI proxy endpoint is configured.");var controller=new AbortController(),timer=setTimeout(function(){controller.abort()},20000);try{var res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(aiPayload(question)),signal:controller.signal});if(!res.ok)throw Error("AI server returned HTTP "+res.status);var data=await res.json();return aiSanitizePlan(data.plan||data)}finally{clearTimeout(timer)}}
+async function runAiQuestion(){var question=clean($("#aiQuestion").value);if(!question){aiSetStatus("Type a question first.","error");return}if(!records.length){aiSetStatus("Load at least one chart file before running an AI question.","error");return}var mode=$("#aiMode").value,endpoint=clean($("#aiEndpoint").value),plan=null,source="local";$("#runAiBtn").disabled=true;aiSetStatus("Interpreting question…","");try{if(mode==="online"||(mode==="auto"&&endpoint)){try{plan=await aiOnlinePlan(question);source="online"}catch(e){if(mode==="online")throw e;plan=aiLocalPlan(question,$("#aiUseContext").checked);source="local";aiSetStatus("Online AI was unavailable; used the local interpreter instead.","")}}else plan=aiLocalPlan(question,$("#aiUseContext").checked);aiLastPlan=plan;aiLastQuestion=question;aiApplyPlan(plan);aiRenderResult(plan,source)}catch(e){aiSetStatus(e&&e.message?e.message:"The AI question could not be interpreted.","error")}finally{$("#runAiBtn").disabled=false}}
+function clearAiQuestion(){$("#aiQuestion").value="";aiLastPlan=null;aiLastQuestion="";$("#aiResult").innerHTML='<div class="text-muted">Ask a question to run an analysis.</div>';aiSetStatus("New AI context started. Manual analyzer filters are unchanged.","success")}
+async function testAiConnection(){var endpoint=clean($("#aiEndpoint").value);if(!endpoint){aiSetStatus("Enter an AI proxy endpoint first.","error");return}aiSetStatus("Testing AI proxy…","");try{var res=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({version:"medevac-kpi-ai-v1",question:"Return a count plan for all cases.",previousPlan:null,allowedFields:[],allowedBreakdowns:[],allowedResults:["count"],today:localIso(new Date()),test:true})});if(!res.ok)throw Error("HTTP "+res.status);await res.json();aiSetStatus("AI proxy responded successfully.","success")}catch(e){aiSetStatus("AI proxy test failed: "+(e&&e.message?e.message:"connection error"),"error")}}
+
+function printManagementReport(){generateReport();var old=document.title;document.title="Medevac_KPI_Management_Report_"+new Date().toISOString().slice(0,10);window.addEventListener("afterprint",function restore(){document.title=old;window.removeEventListener("afterprint",restore)});window.print()}
+function saveSvg(container,name){var svg=container.querySelector("svg");if(!svg){setStatus("There is no chart to save.","error");return}var clone=svg.cloneNode(true),originals=[svg].concat(Array.from(svg.querySelectorAll("*"))),copies=[clone].concat(Array.from(clone.querySelectorAll("*")));originals.forEach(function(node,i){var c=getComputedStyle(node),copy=copies[i];if(copy instanceof SVGElement){if(c.fill&&c.fill!=="none")copy.setAttribute("fill",c.fill);if(c.stroke&&c.stroke!=="none")copy.setAttribute("stroke",c.stroke);if(c.color)copy.setAttribute("color",c.color)}});clone.setAttribute("xmlns","http://www.w3.org/2000/svg");downloadBlob(new Blob([new XMLSerializer().serializeToString(clone)],{type:"image/svg+xml;charset=utf-8"}),name)}
+async function clearPool(){if(!records.length||!confirm("Clear every case from the KPI pool stored in this browser? The original JSON files will not be deleted."))return;await dbClear();storedCases=[];records=[];filteredRecords=[];sessionImport={read:0,added:0,updated:0,duplicates:0,invalid:0};importLog=[];refreshOptions();renderAll();setStatus("The local analysis pool was cleared. Original files were not changed.","success")}
+function activateTab(id){$$(".tabs [data-tab]").forEach(function(b){b.setAttribute("aria-selected",b.dataset.tab===id?"true":"false")});$$(".tab-panel").forEach(function(p){p.hidden=p.id!==id})}
+function bindEvents(){$("#runAiBtn").addEventListener("click",runAiQuestion);$("#clearAiBtn").addEventListener("click",clearAiQuestion);$("#saveAiSettingsBtn").addEventListener("click",aiSaveConnection);$("#testAiBtn").addEventListener("click",testAiConnection);$("#aiMode").addEventListener("change",aiUpdateBadge);$("#aiEndpoint").addEventListener("change",aiUpdateBadge);$("#aiQuestion").addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="Enter")runAiQuestion()});$$((".ai-example")).forEach(function(b){b.addEventListener("click",function(){$("#aiQuestion").value=b.textContent;runAiQuestion()})});$("#chooseFilesBtn").addEventListener("click",function(){$("#fileInput").click()});$("#chooseFolderBtn").addEventListener("click",function(){$("#folderInput").click()});$("#fileInput").addEventListener("change",function(e){importFiles(e.target.files);e.target.value=""});$("#folderInput").addEventListener("change",function(e){importFiles(e.target.files);e.target.value=""});var zone=$("#importZone");["dragenter","dragover"].forEach(function(n){zone.addEventListener(n,function(e){e.preventDefault();zone.classList.add("is-dragging")})});["dragleave","drop"].forEach(function(n){zone.addEventListener(n,function(e){e.preventDefault();zone.classList.remove("is-dragging")})});zone.addEventListener("drop",function(e){importFiles(e.dataTransfer.files)});$("#restorePoolBtn").addEventListener("click",function(){$("#restorePoolInput").click()});$("#restorePoolInput").addEventListener("change",function(e){if(e.target.files[0])restorePoolBackup(e.target.files[0]);e.target.value=""});$("#backupPoolBtn").addEventListener("click",backupPool);$("#applyFiltersBtn").addEventListener("click",applyFilters);$("#resetFiltersBtn").addEventListener("click",resetFilters);$("#applyQuickPresetBtn").addEventListener("click",applyQuickPreset);$("#saveQueryBtn").addEventListener("click",saveCurrentQuery);$("#loadSavedQueryBtn").addEventListener("click",loadSavedQuery);$("#deleteSavedQueryBtn").addEventListener("click",deleteSavedQuery);$("#addConditionBtn").addEventListener("click",addCondition);$("#conditionList").addEventListener("change",function(e){var row=e.target.closest(".condition-row");if(row&&e.target.classList.contains("condition-field"))renderConditionControls(row)});$("#conditionList").addEventListener("click",function(e){var b=e.target.closest(".remove-condition");if(b)removeCondition(b.closest(".condition-row"))});$$('[data-period]').forEach(function(b){b.addEventListener("click",function(){setPeriod(b.dataset.period)})});["#dateFrom","#dateTo","#patientTypeFilter","#ageBandFilter","#airwayFilter","#ventilatedFilter","#lowLevelFilter","#reanimationFilter","#clientFilter","#clinicianFilter","#conditionMode"].forEach(function(id){$(id).addEventListener("change",applyFilters)});$("#textFilter").addEventListener("keydown",function(e){if(e.key==="Enter")applyFilters()});$("#suppressSmallGroups").addEventListener("change",function(){saveSettings();renderAll()});$("#suppressionThreshold").addEventListener("change",function(){saveSettings();renderAll()});$("#trendInterval").addEventListener("change",renderTrend);$("#breakdownGroup").addEventListener("change",renderBreakdown);$("#breakdownType").addEventListener("change",renderBreakdown);["#exploreChartType","#exploreCategory","#exploreMeasure","#exploreMeasureY"].forEach(function(id){$(id).addEventListener("change",renderExplore)});$("#saveExploreBtn").addEventListener("click",function(){saveSvg($("#exploreChart"),"Medevac_KPI_Exploration.svg")});["A","B"].forEach(function(prefix){$("#cohort"+prefix+"Criterion").addEventListener("change",function(){updateCohortValue(prefix);renderComparison()});["Label","Value","From","To"].forEach(function(suffix){$("#cohort"+prefix+suffix).addEventListener("change",renderComparison)})});$("#runComparisonBtn").addEventListener("click",renderComparison);$("#previousPeriodBtn").addEventListener("click",setPreviousComparisonPeriod);["#crosstabRows","#crosstabColumns","#crosstabDisplay"].forEach(function(id){$(id).addEventListener("change",renderCrosstab)});$("#exportCrosstabBtn").addEventListener("click",exportCrosstab);$("#showIdentifiers").addEventListener("change",renderCases);$("#exportAggregateBtn").addEventListener("click",exportAggregateSummary);$("#exportDeidentifiedCsvBtn").addEventListener("click",function(){exportCaseCsv(false)});$("#exportIdentifiableCsvBtn").addEventListener("click",function(){exportCaseCsv(true)});$("#printBtn").addEventListener("click",printManagementReport);$("#generateReportBtn").addEventListener("click",generateReport);$("#saveReportPresetBtn").addEventListener("click",saveReportSetup);$("#loadReportPresetBtn").addEventListener("click",loadReportSetup);$("#deleteReportPresetBtn").addEventListener("click",deleteReportSetup);$("#printReportBtn").addEventListener("click",printManagementReport);$("#clearPoolBtn").addEventListener("click",clearPool);$("#saveTrendBtn").addEventListener("click",function(){saveSvg($("#trendChart"),"Medevac_Mission_Trend.svg")});$("#saveBreakdownBtn").addEventListener("click",function(){saveSvg($("#breakdownChart"),"Medevac_Case_Breakdown.svg")});$$(".tabs [data-tab]").forEach(function(b){b.addEventListener("click",function(){activateTab(b.dataset.tab)})})}
+async function initialize(){initializeDimensionControls();bindEvents();loadSettings();aiLoadConnection();db=await openDb();storedCases=await dbAll();records=storedCases.map(normalizeCase);filteredRecords=records.slice();refreshOptions();renderAll();setStatus(records.length?"Loaded "+records.length.toLocaleString()+" stored case"+(records.length===1?"":"s")+".":"Ready to load chart files.",records.length?"success":"")}
+initialize();
+}());
+</script>
+
+</body>
+</html>
